@@ -2,8 +2,9 @@ import { defineStore } from "pinia";
 
 import {
     login as loginService,
-    register as registerService
-} from "@/services/authService";
+    register as registerService,
+    getMe as getMeService
+} from "../services/authService";
 
 
 export const useAuthStore = defineStore(
@@ -13,6 +14,7 @@ export const useAuthStore = defineStore(
         state: () => ({
             access: localStorage.getItem("access"),
             refresh: localStorage.getItem("refresh"),
+            user: null,
         }),
 
 
@@ -20,6 +22,11 @@ export const useAuthStore = defineStore(
 
             isAuthenticated: (state) => {
                 return !!state.access;
+            },
+
+
+            username: (state) => {
+                return state.user?.username || "";
             }
 
         },
@@ -48,7 +55,11 @@ export const useAuthStore = defineStore(
                     data.refresh
                 );
 
+
+                await this.getMe();
+
             },
+
 
 
             async register(userData) {
@@ -58,13 +69,28 @@ export const useAuthStore = defineStore(
             },
 
 
+
+            async getMe() {
+
+                const data = await getMeService();
+
+                this.user = data;
+
+            },
+
+
+
             logout() {
 
                 this.access = null;
+
                 this.refresh = null;
+
+                this.user = null;
 
 
                 localStorage.removeItem("access");
+
                 localStorage.removeItem("refresh");
 
             }

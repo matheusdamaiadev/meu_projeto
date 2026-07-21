@@ -26,14 +26,15 @@
         >
 
           <div class="avatar">
-            M
+            {{ userInitial }}
           </div>
 
 
           <div class="user-info">
-            <strong>Matheus</strong>
+            <strong>{{ username }}</strong>
             <span>Usuário</span>
           </div>
+
 
           <ChevronDown :size="16" />
 
@@ -49,11 +50,13 @@
             Meu Perfil
           </RouterLink>
 
+
           <RouterLink to="/settings">
             Configurações
           </RouterLink>
 
-          <button>
+
+          <button @click="logout">
             Sair
           </button>
 
@@ -70,7 +73,9 @@
 <script setup>
 
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+
+import { useAuthStore } from '../stores/auth'
 
 import {
   Search,
@@ -79,9 +84,44 @@ import {
 } from 'lucide-vue-next'
 
 
+
 const route = useRoute()
 
+const router = useRouter()
+
+
+const authStore = useAuthStore()
+
+
 const open = ref(false)
+
+
+
+const username = computed(() => {
+
+  return authStore.user?.username || ''
+
+})
+
+
+const userInitial = computed(() => {
+
+  return username.value
+    ? username.value.charAt(0).toUpperCase()
+    : 'U'
+
+})
+
+
+
+function logout() {
+
+  authStore.logout()
+
+  router.push('/login')
+
+}
+
 
 
 const pages = {
@@ -114,20 +154,27 @@ const pages = {
 }
 
 
+
 const pageData = computed(() => {
+
   return pages[route.name] || {
+
     title: 'Momentum',
+
     description: ''
+
   }
+
 })
 
 
 const pageTitle = computed(() => pageData.value.title)
 
+
 const pageDescription = computed(() => pageData.value.description)
 
-</script>
 
+</script>
 
 <style scoped>
 
@@ -345,6 +392,7 @@ const pageDescription = computed(() => pageData.value.description)
 
 
   cursor:pointer;
+  transition: 0.2s ease-in-out;
 
 }
 
@@ -353,6 +401,16 @@ const pageDescription = computed(() => pageData.value.description)
 .dropdown button:hover {
 
   background:#f5f5f5;
+
+}
+
+
+
+.dropdown button:last-child:hover {
+
+  background: #dc2626;
+
+  color: white;
 
 }
 

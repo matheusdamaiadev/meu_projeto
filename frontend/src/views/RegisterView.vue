@@ -69,6 +69,13 @@
         />
 
 
+        <p
+          v-if="error"
+          class="error"
+        >
+          {{ error }}
+        </p>
+
 
         <Button type="submit">
           Criar conta
@@ -103,8 +110,9 @@
 <script setup>
 
 import { ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 
-import { RouterLink } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 import Input from '../components/ui/Input.vue'
 import Button from '../components/ui/Button.vue'
@@ -113,23 +121,54 @@ import Button from '../components/ui/Button.vue'
 const username = ref('')
 const email = ref('')
 const password = ref('')
-const confirmPassword = ref()
+const confirmPassword = ref('')
+
+const error = ref('')
+
+
+const router = useRouter()
+
+const authStore = useAuthStore()
 
 
 
-function register() {
+async function register() {
 
-  console.log({
+  error.value = ''
 
-    username: username.value,
 
-    email: email.value,
+  if (password.value !== confirmPassword.value) {
 
-    password: password.value,
+    error.value = 'As senhas não coincidem'
 
-    confirmPassword: confirmPassword.value
+    return
 
-  })
+  }
+
+
+  try {
+
+    await authStore.register({
+
+      username: username.value,
+
+      email: email.value,
+
+      password: password.value
+
+    })
+
+
+    router.push('/login')
+
+
+  } catch (err) {
+
+    console.error(err)
+
+    error.value = 'Erro ao criar conta'
+
+  }
 
 }
 
@@ -337,6 +376,17 @@ function register() {
 
 }
 
+
+
+.error {
+
+  color:#dc2626;
+
+  text-align:center;
+
+  font-size:14px;
+
+}
 
 
 

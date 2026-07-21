@@ -52,6 +52,14 @@
         />
 
 
+        <p
+          v-if="error"
+          class="error"
+        >
+          {{ error }}
+        </p>
+
+
 
         <Button type="submit">
           Entrar
@@ -87,7 +95,9 @@
 
 import { ref } from 'vue'
 
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+
+import { useAuthStore } from '../stores/auth'
 
 import Input from '../components/ui/Input.vue'
 import Button from '../components/ui/Button.vue'
@@ -96,17 +106,41 @@ import Button from '../components/ui/Button.vue'
 const email = ref('')
 const password = ref('')
 
+const error = ref('')
 
 
-function login() {
+const router = useRouter()
 
-  console.log({
+const authStore = useAuthStore()
 
-    email: email.value,
 
-    password: password.value
 
-  })
+async function login() {
+
+  error.value = ''
+
+
+  try {
+
+    await authStore.login({
+
+      username: email.value,
+
+      password: password.value
+
+    })
+
+
+    router.push('/dashboard')
+
+
+  } catch (err) {
+
+    console.error(err)
+
+    error.value = 'Usuário ou senha incorretos'
+
+  }
 
 }
 
@@ -303,6 +337,18 @@ function login() {
 
 
 
+.error {
+
+  color:#dc2626;
+
+  text-align:center;
+
+  font-size:14px;
+
+}
+
+
+
 
 .register {
 
@@ -332,4 +378,4 @@ function login() {
 
 
 
-</style>
+</style>    
