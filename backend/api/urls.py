@@ -1,6 +1,19 @@
-from django.urls import path
+from django.urls import path, include
 
-from .views import RegisterView, MeView
+from rest_framework.routers import DefaultRouter
+
+from .views import RegisterView, MeView, ProjectViewSet
+
+
+
+router = DefaultRouter()
+
+router.register(
+    "projects",
+    ProjectViewSet,
+    basename="projects"
+)
+
 
 
 urlpatterns = [
@@ -11,10 +24,17 @@ urlpatterns = [
         name="register"
     ),
 
+
     path(
         "me/",
         MeView.as_view(),
         name="me"
+    ),
+
+
+    path(
+        "",
+        include(router.urls)
     ),
 
 ]
