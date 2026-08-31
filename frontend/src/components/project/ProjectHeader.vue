@@ -1,18 +1,51 @@
+```vue
 <template>
 
   <section class="project-header">
 
-    <div class="header-top">
+    <div class="header-content">
 
-      <h1>
-        {{ project.name }}
-      </h1>
+      <div class="project-info">
+
+        <div class="project-title-row">
+
+          <div
+            class="icon"
+            :class="project.color"
+          >
+
+            <component
+              v-if="iconComponent"
+              :is="iconComponent"
+              :size="24"
+            />
+
+            <Folder
+              v-else
+              :size="24"
+            />
+
+          </div>
+
+
+          <h1>
+            {{ project.name }}
+          </h1>
+
+        </div>
+
+
+        <p class="description">
+          {{ project.description || "Sem descrição" }}
+        </p>
+
+      </div>
 
 
       <div class="actions">
 
         <button
-          class="button edit"
+          class="action-button"
           @click="emit('edit')"
         >
           Editar
@@ -20,7 +53,7 @@
 
 
         <button
-          class="button delete"
+          class="action-button delete"
           @click="emit('delete')"
         >
           Excluir
@@ -35,12 +68,6 @@
 
     </div>
 
-
-    <p class="description">
-      {{ project.description || "Sem descrição" }}
-    </p>
-
-
   </section>
 
 </template>
@@ -48,16 +75,24 @@
 
 <script setup>
 
+import { computed } from "vue";
+
+import {
+  Folder
+} from "lucide-vue-next";
+
 import ProjectBoardButton from "./ProjectBoardButton.vue";
 
+import { projectIcons } from "../../utils/projectIcons";
 
-defineProps({
+
+const props = defineProps({
 
   project: {
 
-    type:Object,
+    type: Object,
 
-    required:true
+    required: true
 
   }
 
@@ -72,6 +107,16 @@ const emit = defineEmits([
 
 ]);
 
+
+const iconComponent = computed(() => {
+
+  return (
+    projectIcons[props.project.icon]
+    || null
+  );
+
+});
+
 </script>
 
 
@@ -79,110 +124,261 @@ const emit = defineEmits([
 
 .project-header {
 
-  border:1px solid #000;
+  border: 1px solid #e5e5e5;
 
-  border-radius:12px;
+  border-radius: 16px;
 
-  padding:24px;
+  padding: 28px 30px;
 
-  background:white;
+  background: #fff;
+
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
 
 }
 
 
-.header-top {
+.header-content {
 
-  display:flex;
+  display: flex;
 
-  justify-content:space-between;
+  justify-content: space-between;
 
-  align-items:center;
+  align-items: flex-start;
 
-  gap:20px;
+  gap: 30px;
+
+}
+
+
+.project-info {
+
+  min-width: 0;
+
+}
+
+
+.project-title-row {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+}
+
+
+.icon {
+
+  width: 50px;
+
+  height: 50px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 13px;
+
+  flex-shrink: 0;
 
 }
 
 
 h1 {
 
-  margin:0;
+  margin: 0;
 
-  font-size:32px;
+  color: #111;
 
-  font-weight:700;
+  font-size: 30px;
 
-  color:#111;
+  font-weight: 700;
+
+  letter-spacing: -0.5px;
 
 }
 
 
 .description {
 
-  margin-top:16px;
+  max-width: 700px;
 
-  color:#666;
+  margin: 17px 0 0 65px;
 
-  line-height:1.6;
+  color: #737373;
 
-  font-size:15px;
+  font-size: 14px;
+
+  line-height: 1.6;
 
 }
 
 
 .actions {
 
-  display:flex;
+  display: flex;
 
-  align-items:center;
+  align-items: center;
 
-  gap:10px;
+  gap: 8px;
 
-}
-
-
-.button {
-
-  padding:9px 14px;
-
-  border-radius:8px;
-
-  border:1px solid #ddd;
-
-  background:white;
-
-  cursor:pointer;
-
-  font-size:14px;
-
-  font-weight:500;
-
-  transition:.2s;
+  flex-shrink: 0;
 
 }
 
 
-.button:hover {
+.action-button {
 
-  background:#f3f4f6;
+  height: 38px;
 
-  transform:translateY(-1px);
+  padding: 0 14px;
+
+  border: 1px solid #e5e5e5;
+
+  border-radius: 9px;
+
+  background: #fff;
+
+  color: #333;
+
+  cursor: pointer;
+
+  font-size: 13px;
+
+  font-weight: 500;
+
+  transition: .2s ease;
+
+}
+
+
+.action-button:hover {
+
+  background: #f5f5f5;
+
+  border-color: #d4d4d4;
 
 }
 
 
 .delete {
 
-  color:#dc2626;
+  color: #dc2626;
 
-  border-color:#fecaca;
+  border-color: #fecaca;
 
 }
 
 
 .delete:hover {
 
-  background:#fef2f2;
+  background: #fef2f2;
+
+  border-color: #fca5a5;
+
+}
+
+
+/* Cores dos projetos */
+
+.blue {
+
+  background: #dbeafe;
+
+  color: #2563eb;
+
+}
+
+
+.green {
+
+  background: #dcfce7;
+
+  color: #16a34a;
+
+}
+
+
+.purple {
+
+  background: #f3e8ff;
+
+  color: #9333ea;
+
+}
+
+
+.orange {
+
+  background: #ffedd5;
+
+  color: #ea580c;
+
+}
+
+
+.red {
+
+  background: #fee2e2;
+
+  color: #dc2626;
+
+}
+
+
+.yellow {
+
+  background: #fef9c3;
+
+  color: #ca8a04;
+
+}
+
+
+.gray {
+
+  background: #e5e5e5;
+
+  color: #525252;
+
+}
+
+
+@media (max-width: 700px) {
+
+  .project-header {
+
+    padding: 22px;
+
+  }
+
+
+  .header-content {
+
+    flex-direction: column;
+
+  }
+
+
+  .actions {
+
+    width: 100%;
+
+    flex-wrap: wrap;
+
+  }
+
+
+  .description {
+
+    margin-left: 0;
+
+  }
 
 }
 
 </style>
+```

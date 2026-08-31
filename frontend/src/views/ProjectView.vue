@@ -1,11 +1,19 @@
+```vue
 <template>
+
   <div class="project-page">
 
     <button
       class="back-button"
       @click="goBack"
     >
-      ← Voltar para projetos
+
+      <ArrowLeft :size="16" />
+
+      <span>
+        Projetos
+      </span>
+
     </button>
 
 
@@ -28,7 +36,6 @@
       />
 
 
-
       <section class="tasks-section">
 
         <h2>
@@ -44,37 +51,27 @@
 
         </div>
 
-
       </section>
 
 
-
-
       <ProjectEditModal
-
         v-if="showEdit"
-
         :project="project"
-
         @close="showEdit = false"
-
       />
 
 
-
-
       <ProjectDeleteDialog
-  v-if="showDelete && project"
-  :project="project"
-  @close="showDelete = false"
-/>
-
+        v-if="showDelete && project"
+        :project="project"
+        @close="showDelete = false"
+      />
 
 
     </div>
 
-
   </div>
+
 </template>
 
 
@@ -93,6 +90,11 @@ import {
 } from "vue-router";
 
 
+import {
+  ArrowLeft
+} from "lucide-vue-next";
+
+
 import { useProjectStore } from "../stores/project";
 
 
@@ -103,14 +105,12 @@ import ProjectEditModal from "../components/project/ProjectEditModal.vue";
 import ProjectDeleteDialog from "../components/project/ProjectDeleteDialog.vue";
 
 
-
 const route = useRoute();
 
 const router = useRouter();
 
 
 const projectStore = useProjectStore();
-
 
 
 const project = computed(() => {
@@ -132,9 +132,6 @@ const showEdit = ref(false);
 const showDelete = ref(false);
 
 
-
-
-
 onMounted(async () => {
 
   await projectStore.fetchProject(
@@ -142,9 +139,6 @@ onMounted(async () => {
   );
 
 });
-
-
-
 
 
 function goBack(){
@@ -156,9 +150,6 @@ function goBack(){
 }
 
 
-
-
-
 function openEdit(){
 
   showEdit.value = true;
@@ -166,17 +157,11 @@ function openEdit(){
 }
 
 
-
-
-
 function openDelete(){
 
   showDelete.value = true;
 
 }
-
-
-
 
 
 async function handleDeleted(){
@@ -188,7 +173,6 @@ async function handleDeleted(){
   });
 
 }
-
 
 </script>
 
@@ -204,26 +188,58 @@ async function handleDeleted(){
 
 .back-button {
 
-  background:none;
+  display:inline-flex;
 
-  border:none;
+  align-items:center;
 
-  cursor:pointer;
+  gap:8px;
 
-  font-size:14px;
+  height:36px;
 
-  color:#555;
+  padding:0 12px;
 
   margin-bottom:24px;
 
-  padding:0;
+  border:1px solid #e5e5e5;
+
+  border-radius:9px;
+
+  background:white;
+
+  color:#555;
+
+  cursor:pointer;
+
+  font-size:13px;
+
+  font-weight:500;
+
+  transition:.2s ease;
 
 }
 
 
 .back-button:hover {
 
-  color:#000;
+  background:#f5f5f5;
+
+  border-color:#d4d4d4;
+
+  color:#111;
+
+}
+
+
+.back-button svg {
+
+  transition:.2s ease;
+
+}
+
+
+.back-button:hover svg {
+
+  transform:translateX(-2px);
 
 }
 
@@ -274,3 +290,4 @@ async function handleDeleted(){
 }
 
 </style>
+```

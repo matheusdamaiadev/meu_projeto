@@ -1,4 +1,6 @@
+```vue
 <template>
+
   <div class="projects-page">
 
     <div class="page-header">
@@ -7,7 +9,13 @@
         class="create-button"
         @click="openCreate"
       >
-        + Novo projeto
+
+        <Plus :size="17" />
+
+        <span>
+          Novo projeto
+        </span>
+
       </button>
 
     </div>
@@ -17,7 +25,9 @@
       v-if="loading"
       class="loading"
     >
+
       Carregando projetos...
+
     </div>
 
 
@@ -40,12 +50,21 @@
       class="empty"
     >
 
-      <p>
+      <p v-if="search">
+
+        Nenhum projeto encontrado para
+        "{{ search }}".
+
+      </p>
+
+
+      <p v-else>
+
         Você ainda não possui projetos.
+
       </p>
 
     </div>
-
 
 
     <Modal
@@ -60,8 +79,8 @@
 
     </Modal>
 
-
   </div>
+
 </template>
 
 
@@ -74,6 +93,11 @@ import {
 } from "vue";
 
 
+import {
+  Plus
+} from "lucide-vue-next";
+
+
 import { useProjectStore } from "../stores/project";
 
 
@@ -84,20 +108,80 @@ import ProjectForm from "../components/projects/ProjectForm.vue";
 import Modal from "../components/ui/Modal.vue";
 
 
-
 const projectStore = useProjectStore();
 
 
 const showModal = ref(false);
 
 
+const search = computed(() => {
 
-const projects = computed(() => {
-
-  return projectStore.projects;
+  return projectStore.search;
 
 });
 
+
+const projects = computed(() => {
+
+  const term = search.value
+    .toLowerCase()
+    .trim();
+
+
+  return [...projectStore.projects]
+
+    .filter(project => {
+
+      if (!term) {
+
+        return true;
+
+      }
+
+
+      return (
+
+        project.name
+          ?.toLowerCase()
+          .includes(term)
+
+        ||
+
+        project.description
+          ?.toLowerCase()
+          .includes(term)
+
+      );
+
+    })
+
+    .sort((a, b) => {
+
+      if (
+        a.is_pinned &&
+        !b.is_pinned
+      ) {
+
+        return -1;
+
+      }
+
+
+      if (
+        !a.is_pinned &&
+        b.is_pinned
+      ) {
+
+        return 1;
+
+      }
+
+
+      return 0;
+
+    });
+
+});
 
 
 const loading = computed(() => {
@@ -107,17 +191,11 @@ const loading = computed(() => {
 });
 
 
-
-
-
 onMounted(async () => {
 
   await projectStore.fetchProjects();
 
 });
-
-
-
 
 
 function openCreate(){
@@ -127,17 +205,11 @@ function openCreate(){
 }
 
 
-
-
-
 function closeModal(){
 
   showModal.value = false;
 
 }
-
-
-
 
 
 async function create(data){
@@ -147,7 +219,6 @@ async function create(data){
     await projectStore.createProject(data);
 
     closeModal();
-
 
   } catch(error){
 
@@ -184,30 +255,54 @@ async function create(data){
 
 .create-button {
 
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:8px;
+
+  height:38px;
+
+  padding:0 14px;
+
+  border:1px solid #111;
+
+  border-radius:9px;
+
   background:#111;
 
-  color:white;
-
-  border:none;
-
-  border-radius:10px;
-
-  padding:12px 18px;
+  color:#fff;
 
   cursor:pointer;
 
+  font-size:13px;
+
   font-weight:500;
 
-  transition:.2s;
+  transition:
+    background .2s ease,
+    border-color .2s ease,
+    transform .2s ease;
 
 }
 
 
 .create-button:hover {
 
-  transform:translateY(-2px);
-
   background:#000;
+
+  border-color:#000;
+
+  transform:translateY(-1px);
+
+}
+
+
+.create-button:active {
+
+  transform:translateY(0);
 
 }
 
@@ -216,7 +311,10 @@ async function create(data){
 
   display:grid;
 
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  grid-template-columns:repeat(
+    auto-fill,
+    minmax(260px,1fr)
+  );
 
   gap:20px;
 
@@ -235,3 +333,4 @@ async function create(data){
 }
 
 </style>
+```

@@ -1,3 +1,4 @@
+
 import { defineStore } from "pinia";
 
 
@@ -10,6 +11,8 @@ import {
   createProject,
 
   updateProject,
+
+  patchProject,
 
   deleteProject
 
@@ -34,7 +37,9 @@ export const useProjectStore = defineStore("project", {
     loading: false,
 
 
-    error: null
+    error: null,
+
+    search: ""
 
 
   }),
@@ -302,6 +307,114 @@ export const useProjectStore = defineStore("project", {
           error.response?.data ||
 
           "Erro ao atualizar projeto";
+
+
+
+        throw error;
+
+
+
+      }
+
+
+
+    },
+
+
+
+
+
+
+
+
+
+    async togglePin(id,isPinned){
+
+
+
+      this.error = null;
+
+
+
+      try {
+
+
+
+        const response = await patchProject(
+
+          id,
+
+          {
+
+            is_pinned: isPinned
+
+          }
+
+        );
+
+
+
+
+
+        const index = this.projects.findIndex(
+
+          project => project.id === id
+
+        );
+
+
+
+
+
+        if(index !== -1){
+
+
+
+          this.projects[index] = response.data;
+
+
+
+        }
+
+
+
+
+
+
+
+        if(
+
+          this.currentProject &&
+
+          this.currentProject.id === id
+
+        ){
+
+
+
+          this.currentProject = response.data;
+
+
+
+        }
+
+
+
+
+
+        return response.data;
+
+
+
+      } catch(error){
+
+
+
+        this.error =
+
+          error.response?.data ||
+
+          "Erro ao alterar projeto fixado";
 
 
 

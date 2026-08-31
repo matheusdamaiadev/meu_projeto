@@ -1,3 +1,4 @@
+
 import api from "./api";
 
 
@@ -60,6 +61,26 @@ export function updateProject(id,data){
 
 
   return api.put(
+
+    `/projects/${id}/`,
+
+    data
+
+  );
+
+
+}
+
+
+
+
+
+
+
+export function patchProject(id,data){
+
+
+  return api.patch(
 
     `/projects/${id}/`,
 

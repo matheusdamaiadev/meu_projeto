@@ -1,223 +1,670 @@
+```vue
 <template>
+
   <aside class="sidebar">
+
     <div>
+
+      <!-- LOGO -->
+
       <div class="logo">
+
         <div class="logo-circle"></div>
-        <h1>Momentum</h1>
+
+        <h1>
+          Momentum
+        </h1>
+
       </div>
 
+
+      <!-- NAVEGAÇÃO -->
+
       <nav class="navigation">
-        <RouterLink to="/dashboard" class="nav-item">
+
+        <RouterLink
+          to="/dashboard"
+          class="nav-item"
+        >
+
           <LayoutDashboard :size="18" />
+
           Dashboard
+
         </RouterLink>
 
-        <RouterLink to="/projects" class="nav-item">
+
+        <RouterLink
+          to="/projects"
+          class="nav-item"
+        >
+
           <FolderKanban :size="18" />
+
           Projetos
+
         </RouterLink>
+
       </nav>
 
+
+      <!-- PROJETOS FIXADOS -->
+
       <section class="recent-projects">
-        <h2>Projetos recentes</h2>
 
-        <button
-          v-for="project in recentProjects"
-          :key="project.id"
-          class="project-item"
+        <div class="section-header">
+
+          <h2>
+            Projetos fixados
+          </h2>
+
+          <span class="pin-limit">
+            {{ pinnedProjects.length }}/5
+          </span>
+
+        </div>
+
+
+        <div
+          v-if="pinnedProjects.length"
+          class="project-list"
         >
-          <span
-            class="project-color"
-            :style="{ backgroundColor: project.color }"
-          ></span>
 
-          {{ project.name }}
-        </button>
+          <div
+            v-for="project in pinnedProjects"
+            :key="project.id"
+            class="project-item"
+          >
+
+            <button
+              class="project-link"
+              @click="openProject(project.id)"
+            >
+
+              <span
+                class="project-color"
+                :class="project.color"
+              ></span>
+
+
+              <span class="project-name">
+                {{ project.name }}
+              </span>
+
+            </button>
+
+
+            <button
+              class="pin-button"
+              title="Desafixar projeto"
+              @click.stop="togglePin(project)"
+            >
+
+              <Pin
+                :size="14"
+                :fill="'currentColor'"
+              />
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div
+          v-else
+          class="empty-projects"
+        >
+
+          <Pin :size="15" />
+
+          <span>
+            Nenhum projeto fixado
+          </span>
+
+        </div>
+
       </section>
+
     </div>
 
-    <button class="new-project">
+
+    <!-- NOVO PROJETO -->
+
+    <button
+      class="new-project"
+      @click="createProject"
+    >
+
       <Plus :size="18" />
+
       Novo Projeto
+
     </button>
+
   </aside>
 </template>
 
-<script setup>
-import { RouterLink } from 'vue-router'
-import { LayoutDashboard, FolderKanban, Plus } from 'lucide-vue-next'
 
-const recentProjects = [
-  {
-    id: 1,
-    name: 'Faculdade',
-    color: '#3B82F6'
-  },
-  {
-    id: 2,
-    name: 'Academia',
-    color: '#22C55E'
-  },
-  {
-    id: 3,
-    name: 'Casa',
-    color: '#F97316'
-  },
-  {
-    id: 4,
-    name: 'Trabalho',
-    color: '#A855F7'
-  },
-  {
-    id: 5,
-    name: 'Momentum',
-    color: '#EF4444'
+<script setup>
+
+import {
+  computed,
+  onMounted
+} from "vue";
+
+
+import {
+  useRouter,
+  RouterLink
+} from "vue-router";
+
+
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Plus,
+  Pin
+} from "lucide-vue-next";
+
+
+import { useProjectStore } from "../../stores/project";
+
+
+const router = useRouter();
+
+const projectStore = useProjectStore();
+
+
+const projects = computed(() => {
+
+  return projectStore.projects;
+
+});
+
+
+const pinnedProjects = computed(() => {
+
+  return projects.value
+
+    .filter(project => project.is_pinned)
+
+    .slice(0, 5);
+
+});
+
+
+onMounted(async () => {
+
+  if (!projects.value.length) {
+
+    await projectStore.fetchProjects();
+
   }
-]
+
+});
+
+async function togglePin(project) {
+
+  try {
+
+    await projectStore.togglePin(
+      project.id,
+      false
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Erro ao desafixar projeto:",
+      error
+    );
+
+  }
+
+}
+
+
+
+function openProject(projectId) {
+
+  router.push({
+
+    name: "project",
+
+    params: {
+      id: projectId
+    }
+
+  });
+
+}
+
+
+function createProject() {
+
+  router.push({
+    name: "projects"
+  });
+
+}
+
 </script>
 
+
 <style scoped>
+
 .sidebar {
-  width: 270px;
-  height: 100vh;
 
-  background: #111;
+  width:270px;
 
-  color: white;
+  height:100vh;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  background:#111;
 
-  padding: 28px 20px;
+  color:white;
 
-  position: sticky;
-  top: 0;
+  display:flex;
+
+  flex-direction:column;
+
+  justify-content:space-between;
+
+  padding:28px 20px;
+
+  position:sticky;
+
+  top:0;
+
+  box-sizing:border-box;
+
 }
+
+
+/* LOGO */
 
 .logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 
-  margin-bottom: 42px;
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+  margin-bottom:42px;
+
 }
+
 
 .logo-circle {
-  width: 12px;
-  height: 12px;
 
-  background: white;
+  width:12px;
 
-  border-radius: 50%;
+  height:12px;
+
+  background:white;
+
+  border-radius:50%;
+
 }
+
 
 .logo h1 {
-  font-size: 24px;
+
+  margin:0;
+
+  font-size:24px;
+
 }
+
+
+/* NAVEGAÇÃO */
 
 .navigation {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:6px;
+
 }
+
 
 .nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 
-  color: #d6d6d6;
+  display:flex;
 
-  padding: 12px 14px;
+  align-items:center;
 
-  border-radius: 12px;
+  gap:12px;
 
-  transition: .2s;
+  color:#d6d6d6;
+
+  padding:12px 14px;
+
+  border-radius:12px;
+
+  text-decoration:none;
+
+  transition:.2s;
+
 }
+
 
 .nav-item:hover,
 .router-link-active {
-  background: #1d1d1d;
 
-  color: white;
+  background:#1d1d1d;
+
+  color:white;
+
 }
+
+
+/* PROJETOS */
 
 .recent-projects {
-  margin-top: 38px;
+
+  margin-top:38px;
+
 }
+
+
+.section-header {
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:0 8px;
+
+  margin-bottom:10px;
+
+}
+
 
 .recent-projects h2 {
-  color: #777;
 
-  font-size: 13px;
+  margin:0;
 
-  margin-bottom: 14px;
+  color:#777;
 
-  text-transform: uppercase;
+  font-size:12px;
 
-  letter-spacing: 1px;
+  text-transform:uppercase;
+
+  letter-spacing:1px;
+
 }
+
+
+.pin-limit {
+
+  color:#555;
+
+  font-size:11px;
+
+}
+
+
+.project-list {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:2px;
+
+}
+
 
 .project-item {
-  width: 100%;
 
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  width:100%;
 
-  padding: 10px 14px;
+  display:flex;
 
-  border: none;
+  align-items:center;
 
-  background: transparent;
+  border-radius:10px;
 
-  color: #d6d6d6;
+  transition:.2s;
 
-  border-radius: 12px;
-
-  transition: .2s;
-
-  cursor: pointer;
 }
+
 
 .project-item:hover {
-  background: #1d1d1d;
 
-  color: white;
+  background:#1d1d1d;
+
 }
+
+
+/* LINK DO PROJETO */
+
+.project-link {
+
+  min-width:0;
+
+  flex:1;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:11px;
+
+  padding:10px 8px 10px 14px;
+
+  border:none;
+
+  background:transparent;
+
+  color:#d6d6d6;
+
+  cursor:pointer;
+
+  text-align:left;
+
+}
+
+
+.project-link:hover {
+
+  color:white;
+
+}
+
+
+.project-name {
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+
+  font-size:14px;
+
+}
+
+
+/* COR DO PROJETO */
 
 .project-color {
-  width: 10px;
-  height: 10px;
 
-  border-radius: 50%;
+  width:9px;
+
+  height:9px;
+
+  border-radius:50%;
+
+  flex-shrink:0;
+
 }
+
+
+.blue {
+
+  background:#3b82f6;
+
+}
+
+
+.green {
+
+  background:#22c55e;
+
+}
+
+
+.purple {
+
+  background:#a855f7;
+
+}
+
+
+.orange {
+
+  background:#f97316;
+
+}
+
+
+.red {
+
+  background:#ef4444;
+
+}
+
+
+.yellow {
+
+  background:#eab308;
+
+}
+
+
+.gray {
+
+  background:#737373;
+
+}
+
+
+/* BOTÃO DE FIXAR */
+
+.pin-button {
+
+  width:32px;
+
+  height:32px;
+
+  margin-right:4px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border:none;
+
+  border-radius:8px;
+
+  background:transparent;
+
+  color:#777;
+
+  cursor:pointer;
+
+  opacity:0;
+
+  transition:.2s;
+
+}
+
+
+.project-item:hover .pin-button {
+
+  opacity:1;
+
+}
+
+
+.pin-button:hover {
+
+  background:#292929;
+
+  color:white;
+
+}
+
+
+/* NENHUM PROJETO */
+
+.empty-projects {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  padding:10px 8px;
+
+  color:#555;
+
+  font-size:12px;
+
+}
+
+
+/* NOVO PROJETO */
 
 .new-project {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
 
-  border: none;
+  display:flex;
 
-  background: white;
+  align-items:center;
 
-  color: black;
+  justify-content:center;
 
-  border-radius: 14px;
+  gap:10px;
 
-  padding: 14px;
+  height:40px;
 
-  font-weight: 600;
+  border:1px solid white;
 
-  cursor: pointer;
+  background:white;
 
-  transition: .2s;
+  color:black;
+
+  border-radius:9px;
+
+  font-size:13px;
+
+  font-weight:500;
+
+  cursor:pointer;
+
+  transition:.2s;
+
 }
+
 
 .new-project:hover {
-  transform: translateY(-1px);
+
+  background:#f5f5f5;
+
+  transform:translateY(-1px);
+
 }
+
 </style>
+```

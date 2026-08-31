@@ -10,6 +10,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
+
         model = User
 
         fields = [
@@ -27,16 +28,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         return user
-    
+
+
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
+
         model = User
 
         fields = [
             "username",
             "email",
         ]
+
 
 class ProjectSerializer(serializers.ModelSerializer):
 
@@ -50,6 +54,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "description",
             "color",
             "icon",
+            "is_pinned",
             "created_at",
             "updated_at",
         ]
