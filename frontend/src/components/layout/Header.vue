@@ -1,10 +1,7 @@
 ```vue
 <template>
-
   <header class="header">
-
     <div class="page-info">
-
       <h1>
         {{ pageTitle }}
       </h1>
@@ -12,173 +9,87 @@
       <p>
         {{ pageDescription }}
       </p>
-
     </div>
 
-
     <div class="actions">
-
-
       <!-- PESQUISA -->
 
-      <div
-        v-if="searchOpen"
-        class="search-box"
-      >
-
+      <div v-if="searchOpen" class="search-box">
         <Search :size="17" />
 
         <input
           ref="searchInput"
-          v-model="projectStore.search"
+          v-model="searchValue"
           type="text"
-          placeholder="Buscar projetos..."
+          :placeholder="searchPlaceholder"
         />
 
-        <button
-          class="close-search"
-          @click="closeSearch"
-        >
-
-          ×
-
-        </button>
-
+        <button class="close-search" @click="closeSearch">×</button>
       </div>
 
-
-      <button
-        v-else
-        class="icon-button"
-        title="Pesquisar"
-        @click="openSearch"
-      >
-
+      <button v-else class="icon-button" title="Pesquisar" @click="openSearch">
         <Search :size="18" />
-
       </button>
-
 
       <!-- NOTIFICAÇÕES -->
 
-      <button
-        class="icon-button"
-        title="Notificações"
-      >
-
+      <button class="icon-button" title="Notificações">
         <Bell :size="18" />
-
       </button>
-
 
       <!-- PERFIL -->
 
       <div class="profile-wrapper">
-
-        <button
-          class="profile"
-          @click="open = !open"
-        >
-
+        <button class="profile" @click="open = !open">
           <div class="avatar">
-
             {{ userInitial }}
-
           </div>
 
-
           <div class="user-info">
-
             <strong>
               {{ username }}
             </strong>
 
-            <span>
-              Usuário
-            </span>
-
+            <span> Usuário </span>
           </div>
 
-
           <ChevronDown :size="16" />
-
         </button>
 
+        <div v-if="open" class="dropdown">
+          <RouterLink to="/profile"> Meu Perfil </RouterLink>
 
-        <div
-          v-if="open"
-          class="dropdown"
-        >
+          <RouterLink to="/settings"> Configurações </RouterLink>
 
-          <RouterLink to="/profile">
-
-            Meu Perfil
-
-          </RouterLink>
-
-
-          <RouterLink to="/settings">
-
-            Configurações
-
-          </RouterLink>
-
-
-          <button @click="logout">
-
-            Sair
-
-          </button>
-
+          <button @click="logout">Sair</button>
         </div>
-
       </div>
-
     </div>
-
   </header>
-
 </template>
 
-
 <script setup>
+import { ref, computed, nextTick, watch } from "vue";
 
-import {
-  ref,
-  computed,
-  nextTick
-} from "vue";
+import { useRoute, useRouter, RouterLink } from "vue-router";
 
-
-import {
-  useRoute,
-  useRouter,
-  RouterLink
-} from "vue-router";
-
-
-import {
-  Search,
-  Bell,
-  ChevronDown
-} from "lucide-vue-next";
-
+import { Search, Bell, ChevronDown } from "lucide-vue-next";
 
 import { useAuthStore } from "../../stores/auth";
 
-
 import { useProjectStore } from "../../stores/project";
 
+import { useTaskStore } from "../../stores/task";
 
 const route = useRoute();
 
 const router = useRouter();
 
-
 const authStore = useAuthStore();
 
 const projectStore = useProjectStore();
 
+const taskStore = useTaskStore();
 
 const open = ref(false);
 
@@ -186,467 +97,412 @@ const searchOpen = ref(false);
 
 const searchInput = ref(null);
 
+/* =========================
+   BUSCA
+========================= */
+
+const isProjectPage = computed(() => {
+  return route.name === "project";
+});
+
+const searchValue = computed({
+  get() {
+    if (isProjectPage.value) {
+      return taskStore.search;
+    }
+
+    return projectStore.search;
+  },
+
+  set(value) {
+    if (isProjectPage.value) {
+      taskStore.search = value;
+    } else {
+      projectStore.search = value;
+    }
+  },
+});
+
+const searchPlaceholder = computed(() => {
+  return isProjectPage.value ? "Buscar tarefas..." : "Buscar projetos...";
+});
+
+/* =========================
+   USUÁRIO
+========================= */
 
 const username = computed(() => {
-
   return authStore.user?.username || "";
-
 });
-
 
 const userInitial = computed(() => {
-
-  return username.value
-
-    ? username.value
-        .charAt(0)
-        .toUpperCase()
-
-    : "U";
-
+  return username.value ? username.value.charAt(0).toUpperCase() : "U";
 });
 
+/* =========================
+   PESQUISA
+========================= */
 
 function openSearch() {
-
   searchOpen.value = true;
 
-
   nextTick(() => {
-
     searchInput.value?.focus();
-
   });
-
 }
-
 
 function closeSearch() {
-
   searchOpen.value = false;
 
-  projectStore.search = "";
-
+  if (isProjectPage.value) {
+    taskStore.search = "";
+  } else {
+    projectStore.search = "";
+  }
 }
 
+/*
+ * Quando muda de página,
+ * limpa a busca anterior.
+ */
+
+watch(
+  () => route.name,
+  () => {
+    searchOpen.value = false;
+
+    taskStore.search = "";
+  }
+);
+
+/* =========================
+   LOGOUT
+========================= */
 
 function logout() {
-
   authStore.logout();
 
   router.push("/login");
-
 }
 
+/* =========================
+   PÁGINAS
+========================= */
 
 const pages = {
-
   dashboard: {
-
     title: "Dashboard",
 
-    description: "Visão geral dos seus projetos"
-
+    description: "Visão geral dos seus projetos",
   },
-
 
   projects: {
-
     title: "Projetos",
 
-    description: "Gerencie todos os seus projetos"
-
+    description: "Gerencie todos os seus projetos",
   },
-
 
   project: {
-
     title: "Projeto",
 
-    description: "Detalhes e tarefas do projeto"
-
+    description: "Detalhes e tarefas do projeto",
   },
-
 
   profile: {
-
     title: "Perfil",
 
-    description: "Informações da sua conta"
-
+    description: "Informações da sua conta",
   },
 
-
   settings: {
-
     title: "Configurações",
 
-    description: "Personalize sua experiência"
-
-  }
-
+    description: "Personalize sua experiência",
+  },
 };
 
-
 const pageData = computed(() => {
+  return (
+    pages[route.name] || {
+      title: "Momentum",
 
-  return pages[route.name] || {
-
-    title: "Momentum",
-
-    description: ""
-
-  };
-
+      description: "",
+    }
+  );
 });
-
 
 const pageTitle = computed(() => {
-
   return pageData.value.title;
-
 });
-
 
 const pageDescription = computed(() => {
-
   return pageData.value.description;
-
 });
-
 </script>
 
-
 <style scoped>
-
 .header {
+  height: 80px;
 
-  height:80px;
+  background: white;
 
-  background:white;
+  border-bottom: 1px solid #e5e5e5;
 
-  border-bottom:1px solid #e5e5e5;
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
+  justify-content: space-between;
 
-  justify-content:space-between;
-
-  padding:0 32px;
-
+  padding: 0 32px;
 }
-
 
 .page-info h1 {
+  margin: 0;
 
-  margin:0;
+  font-size: 24px;
 
-  font-size:24px;
-
-  font-weight:600;
-
+  font-weight: 600;
 }
-
 
 .page-info p {
+  margin-top: 4px;
 
-  margin-top:4px;
+  color: #737373;
 
-  color:#737373;
-
-  font-size:14px;
-
+  font-size: 14px;
 }
-
 
 .actions {
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
-
-  gap:12px;
-
+  gap: 12px;
 }
-
 
 /* PESQUISA */
 
 .search-box {
+  width: 260px;
 
-  width:260px;
+  height: 40px;
 
-  height:40px;
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
+  gap: 9px;
 
-  gap:9px;
+  padding: 0 10px 0 13px;
 
-  padding:0 10px 0 13px;
+  border: 1px solid #d4d4d4;
 
-  border:1px solid #d4d4d4;
+  border-radius: 12px;
 
-  border-radius:12px;
+  background: white;
 
-  background:white;
+  color: #737373;
 
-  color:#737373;
+  box-sizing: border-box;
 
-  box-sizing:border-box;
-
-  transition:.2s ease;
-
+  transition: 0.2s ease;
 }
-
 
 .search-box:focus-within {
+  border-color: #111;
 
-  border-color:#111;
-
-  box-shadow:0 0 0 3px rgba(0,0,0,.05);
-
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
-
 
 .search-box input {
+  flex: 1;
 
-  flex:1;
+  min-width: 0;
 
-  min-width:0;
+  border: none;
 
-  border:none;
+  outline: none;
 
-  outline:none;
+  background: transparent;
 
-  background:transparent;
+  color: #111;
 
-  color:#111;
-
-  font-size:14px;
-
+  font-size: 14px;
 }
-
 
 .search-box input::placeholder {
-
-  color:#999;
-
+  color: #999;
 }
-
 
 .close-search {
+  width: 24px;
 
-  width:24px;
+  height: 24px;
 
-  height:24px;
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
+  justify-content: center;
 
-  justify-content:center;
+  border: none;
 
-  border:none;
+  border-radius: 6px;
 
-  border-radius:6px;
+  background: transparent;
 
-  background:transparent;
+  color: #777;
 
-  color:#777;
+  cursor: pointer;
 
-  cursor:pointer;
+  font-size: 18px;
 
-  font-size:18px;
-
-  line-height:1;
-
+  line-height: 1;
 }
-
 
 .close-search:hover {
+  background: #f5f5f5;
 
-  background:#f5f5f5;
-
-  color:#111;
-
+  color: #111;
 }
-
 
 /* BOTÕES */
 
 .icon-button {
+  width: 40px;
 
-  width:40px;
+  height: 40px;
 
-  height:40px;
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
+  justify-content: center;
 
-  justify-content:center;
+  border: 1px solid #e5e5e5;
 
-  border:1px solid #e5e5e5;
+  border-radius: 12px;
 
-  border-radius:12px;
+  background: white;
 
-  background:white;
-
-  cursor:pointer;
-
+  cursor: pointer;
 }
-
 
 .icon-button:hover {
-
-  background:#f5f5f5;
-
+  background: #f5f5f5;
 }
-
 
 /* PERFIL */
 
 .profile-wrapper {
-
-  position:relative;
-
+  position: relative;
 }
-
 
 .profile {
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
+  gap: 10px;
 
-  gap:10px;
+  border: none;
 
-  border:none;
+  background: none;
 
-  background:none;
-
-  cursor:pointer;
-
+  cursor: pointer;
 }
-
 
 .avatar {
+  width: 42px;
 
-  width:42px;
+  height: 42px;
 
-  height:42px;
+  display: flex;
 
-  display:flex;
+  align-items: center;
 
-  align-items:center;
+  justify-content: center;
 
-  justify-content:center;
+  border-radius: 50%;
 
-  border-radius:50%;
+  background: #111;
 
-  background:#111;
+  color: white;
 
-  color:white;
-
-  font-weight:600;
-
+  font-weight: 600;
 }
-
 
 .user-info {
+  display: flex;
 
-  display:flex;
+  flex-direction: column;
 
-  flex-direction:column;
-
-  text-align:left;
-
+  text-align: left;
 }
-
 
 .user-info strong {
-
-  font-size:14px;
-
+  font-size: 14px;
 }
-
 
 .user-info span {
+  font-size: 12px;
 
-  font-size:12px;
-
-  color:#777;
-
+  color: #777;
 }
-
 
 .dropdown {
+  position: absolute;
 
-  position:absolute;
+  right: 0;
 
-  right:0;
+  top: 55px;
 
-  top:55px;
+  width: 200px;
 
-  width:200px;
+  padding: 8px;
 
-  padding:8px;
+  border: 1px solid #e5e5e5;
 
-  border:1px solid #e5e5e5;
+  border-radius: 14px;
 
-  border-radius:14px;
+  background: white;
 
-  background:white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
-
-  z-index:10;
-
+  z-index: 10;
 }
-
 
 .dropdown a,
 .dropdown button {
+  width: 100%;
 
-  width:100%;
+  display: block;
 
-  display:block;
+  padding: 12px;
 
-  padding:12px;
+  border: none;
 
-  border:none;
+  border-radius: 10px;
 
-  border-radius:10px;
+  background: none;
 
-  background:none;
+  text-align: left;
 
-  text-align:left;
+  cursor: pointer;
 
-  cursor:pointer;
-
-  transition:.2s ease-in-out;
-
+  transition: 0.2s ease-in-out;
 }
-
 
 .dropdown a:hover,
 .dropdown button:hover {
-
-  background:#f5f5f5;
-
+  background: #f5f5f5;
 }
-
 
 .dropdown button:last-child:hover {
+  background: #dc2626;
 
-  background:#dc2626;
-
-  color:white;
-
+  color: white;
 }
-
 </style>
 ```

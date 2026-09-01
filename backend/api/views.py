@@ -82,15 +82,25 @@ class TaskViewSet(ModelViewSet):
 
     def get_queryset(self):
 
-        return Task.objects.filter(
+        queryset = Task.objects.filter(
             project__user=self.request.user
         )
+
+        project_id = self.request.query_params.get("project")
+
+        if project_id:
+            queryset = queryset.filter(
+                project_id=project_id
+            )
+
+        return queryset
 
     def perform_create(self, serializer):
 
         project = serializer.validated_data["project"]
 
         if project.user != self.request.user:
+
             from rest_framework.exceptions import PermissionDenied
 
             raise PermissionDenied(

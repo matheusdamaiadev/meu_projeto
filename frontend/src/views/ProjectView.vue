@@ -1,102 +1,70 @@
 ```vue
 <template>
-
   <div class="project-page">
-
-    <button
-      class="back-button"
-      @click="goBack"
-    >
-
+    <button class="back-button" @click="goBack">
       <ArrowLeft :size="16" />
 
-      <span>
-        Projetos
-      </span>
-
+      <span> Projetos </span>
     </button>
 
-
     <div v-if="loading">
-
-      <div class="loading">
-        Carregando projeto...
-      </div>
-
+      <div class="loading">Carregando projeto...</div>
     </div>
 
-
     <div v-else-if="project">
+      <ProjectHeader :project="project" @edit="openEdit" @delete="openDelete" />
 
+      <!-- PROGRESSO DO PROJETO -->
 
-      <ProjectHeader
-        :project="project"
-        @edit="openEdit"
-        @delete="openDelete"
-      />
+      <ProjectProgress :project-id="Number(route.params.id)" />
 
+      <!-- TAREFAS -->
 
       <section class="tasks-section">
-
-        <h2>
-          Tarefas
-        </h2>
-
-
-        <div class="tasks-placeholder">
-
-          <p>
-            Tarefas serão implementadas futuramente.
-          </p>
-
-        </div>
-
+        <TaskList :project-id="Number(route.params.id)" />
       </section>
 
+      <!-- BOTÃO FLUTUANTE -->
 
-      <ProjectEditModal
-        v-if="showEdit"
-        :project="project"
-        @close="showEdit = false"
+      <button
+        class="floating-add-button"
+        @click="showTaskForm = true"
+        aria-label="Criar tarefa"
+      >
+        +
+      </button>
+
+      <!-- MODAL DE CRIAÇÃO -->
+
+      <TaskForm
+        :project-id="Number(route.params.id)"
+        :show="showTaskForm"
+        @close="showTaskForm = false"
       />
 
+      <!-- EDITAR PROJETO -->
+
+      <ProjectEditModal v-if="showEdit" :project="project" @close="showEdit = false" />
+
+      <!-- EXCLUIR PROJETO -->
 
       <ProjectDeleteDialog
         v-if="showDelete && project"
         :project="project"
         @close="showDelete = false"
       />
-
-
     </div>
-
   </div>
-
 </template>
 
-
 <script setup>
+import { onMounted, computed, ref } from "vue";
 
-import {
-  onMounted,
-  computed,
-  ref
-} from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-
-import {
-  useRoute,
-  useRouter
-} from "vue-router";
-
-
-import {
-  ArrowLeft
-} from "lucide-vue-next";
-
+import { ArrowLeft } from "lucide-vue-next";
 
 import { useProjectStore } from "../stores/project";
-
 
 import ProjectHeader from "../components/project/ProjectHeader.vue";
 
@@ -104,190 +72,200 @@ import ProjectEditModal from "../components/project/ProjectEditModal.vue";
 
 import ProjectDeleteDialog from "../components/project/ProjectDeleteDialog.vue";
 
+import ProjectProgress from "../components/project/ProjectProgress.vue";
+
+import TaskForm from "../components/tasks/TaskForm.vue";
+
+import TaskList from "../components/tasks/TaskList.vue";
 
 const route = useRoute();
 
 const router = useRouter();
 
-
 const projectStore = useProjectStore();
 
-
 const project = computed(() => {
-
   return projectStore.currentProject;
-
 });
-
 
 const loading = computed(() => {
-
   return projectStore.loading;
-
 });
-
 
 const showEdit = ref(false);
 
 const showDelete = ref(false);
 
+const showTaskForm = ref(false);
 
 onMounted(async () => {
-
-  await projectStore.fetchProject(
-    route.params.id
-  );
-
+  await projectStore.fetchProject(route.params.id);
 });
 
-
-function goBack(){
-
+function goBack() {
   router.push({
-    name:"projects"
+    name: "projects",
   });
-
 }
 
-
-function openEdit(){
-
+function openEdit() {
   showEdit.value = true;
-
 }
 
-
-function openDelete(){
-
+function openDelete() {
   showDelete.value = true;
-
 }
 
-
-async function handleDeleted(){
-
+async function handleDeleted() {
   showDelete.value = false;
 
   await router.push({
-    name:"projects"
+    name: "projects",
   });
-
 }
-
 </script>
 
-
 <style scoped>
-
 .project-page {
-
-  padding:32px;
-
+  padding: 32px;
 }
 
+/* =========================
+   BOTÃO VOLTAR
+========================= */
 
 .back-button {
+  display: inline-flex;
 
-  display:inline-flex;
+  align-items: center;
 
-  align-items:center;
+  gap: 8px;
 
-  gap:8px;
+  height: 36px;
 
-  height:36px;
+  padding: 0 12px;
 
-  padding:0 12px;
+  margin-bottom: 24px;
 
-  margin-bottom:24px;
+  border: 1px solid #e5e5e5;
 
-  border:1px solid #e5e5e5;
+  border-radius: 9px;
 
-  border-radius:9px;
+  background: white;
 
-  background:white;
+  color: #555;
 
-  color:#555;
+  cursor: pointer;
 
-  cursor:pointer;
+  font-size: 13px;
 
-  font-size:13px;
+  font-weight: 500;
 
-  font-weight:500;
-
-  transition:.2s ease;
-
+  transition: 0.2s ease;
 }
-
 
 .back-button:hover {
+  background: #f5f5f5;
 
-  background:#f5f5f5;
+  border-color: #d4d4d4;
 
-  border-color:#d4d4d4;
-
-  color:#111;
-
+  color: #111;
 }
-
 
 .back-button svg {
-
-  transition:.2s ease;
-
+  transition: 0.2s ease;
 }
-
 
 .back-button:hover svg {
-
-  transform:translateX(-2px);
-
+  transform: translateX(-2px);
 }
 
+/* =========================
+   TAREFAS
+========================= */
 
 .tasks-section {
-
-  margin-top:40px;
-
+  margin-top: 40px;
 }
 
+/* =========================
+   BOTÃO FLUTUANTE
+========================= */
 
-.tasks-section h2 {
+.floating-add-button {
+  position: fixed;
 
-  font-size:24px;
+  right: 32px;
 
-  margin-bottom:16px;
+  bottom: 32px;
 
+  width: 52px;
+
+  height: 52px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: #111;
+
+  color: white;
+
+  font-size: 28px;
+
+  font-weight: 300;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+
+  transition: 0.2s ease;
+
+  z-index: 100;
 }
 
+.floating-add-button:hover {
+  transform: translateY(-2px);
 
-.tasks-placeholder {
+  background: #333;
 
-  min-height:200px;
-
-  border:1px dashed #aaa;
-
-  border-radius:12px;
-
-  display:flex;
-
-  justify-content:center;
-
-  align-items:center;
-
-  color:#777;
-
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
+/* =========================
+   LOADING
+========================= */
 
 .loading {
+  padding: 40px;
 
-  padding:40px;
+  text-align: center;
 
-  text-align:center;
-
-  color:#777;
-
+  color: #777;
 }
 
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+  .project-page {
+    padding: 20px;
+  }
+
+  .floating-add-button {
+    right: 20px;
+
+    bottom: 20px;
+  }
+}
 </style>
 ```
