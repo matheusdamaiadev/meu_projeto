@@ -7,10 +7,11 @@ from rest_framework.viewsets import ModelViewSet
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
-    ProjectSerializer
+    ProjectSerializer,
+    TaskSerializer
 )
 
-from .models import Project
+from .models import Project, Task
 
 
 class RegisterView(CreateAPIView):
@@ -35,20 +36,17 @@ class ProjectViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
 
-
     def get_queryset(self):
 
         return Project.objects.filter(
             user=self.request.user
         )
 
-
     def perform_create(self, serializer):
 
         serializer.save(
             user=self.request.user
         )
-
 
     def perform_update(self, serializer):
 
@@ -59,14 +57,12 @@ class ProjectViewSet(ModelViewSet):
             project.is_pinned
         )
 
-
         if new_is_pinned and not project.is_pinned:
 
             pinned_count = Project.objects.filter(
                 user=self.request.user,
                 is_pinned=True
             ).count()
-
 
             if pinned_count >= 5:
 
@@ -76,5 +72,29 @@ class ProjectViewSet(ModelViewSet):
                     "is_pinned": "Você pode fixar no máximo 5 projetos."
                 })
 
+        serializer.save()
+
+
+class TaskViewSet(ModelViewSet):
+
+    serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+
+        return Task.objects.filter(
+            project__user=self.request.user
+        )
+
+    def perform_create(self, serializer):
+
+        project = serializer.validated_data["project"]
+
+        if project.user != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "Você não pode criar uma tarefa neste projeto."
+            )
 
         serializer.save()

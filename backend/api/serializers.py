@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Project
+from .models import Project, Task
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -55,6 +55,29 @@ class ProjectSerializer(serializers.ModelSerializer):
             "color",
             "icon",
             "is_pinned",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class TaskSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = Task
+
+        fields = [
+            "id",
+            "project",
+            "title",
+            "description",
+            "completed",
             "created_at",
             "updated_at",
         ]
