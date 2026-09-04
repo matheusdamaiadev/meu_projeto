@@ -196,31 +196,26 @@ async function handleDeleted() {
   position: fixed;
 
   right: 32px;
-
   bottom: 32px;
 
   width: 52px;
-
   height: 52px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  border: 0;
+  padding: 0;
 
+  border: 0;
   border-radius: 50%;
 
   background: #111;
-
   color: white;
 
+  font-family: inherit;
   font-size: 28px;
-
   font-weight: 300;
-
   line-height: 1;
 
   cursor: pointer;

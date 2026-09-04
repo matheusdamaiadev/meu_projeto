@@ -51,6 +51,7 @@ import { Check, Trash2 } from "lucide-vue-next";
 import { useTaskStore } from "../../stores/task";
 
 import Modal from "../ui/Modal.vue";
+import TaskDetailsModal from "./TaskDetailsModal.vue";
 
 const props = defineProps({
   task: {
@@ -220,7 +221,7 @@ onBeforeUnmount(() => {
 }
 
 .task-item:hover {
-  border-color: #d4d4d4;
+  border-color: #000000;
 }
 
 /* =========================

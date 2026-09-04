@@ -1,290 +1,214 @@
 <template>
-  <div class="overlay">
-
-    <div class="modal">
-
+  <Modal v-model="isOpen">
+    <div class="confirmation">
       <div class="icon">
-        !
+        <span>!</span>
       </div>
 
-      <h2>
-        Excluir projeto?
-      </h2>
+      <h2>Excluir projeto?</h2>
 
       <p>
         Você está prestes a excluir:
         <strong>{{ project.name }}</strong>
       </p>
 
+      <p class="warning">Essa ação não pode ser desfeita.</p>
 
       <div class="actions">
-
-        <button
-          class="cancel"
-          @click="close"
-        >
+        <button type="button" class="button cancel" :disabled="loading" @click="close">
           Cancelar
         </button>
 
-
-        <button
-          class="delete"
-          @click="remove"
-          :disabled="loading"
-        >
+        <button type="button" class="button delete" :disabled="loading" @click="remove">
           {{ loading ? "Excluindo..." : "Excluir projeto" }}
         </button>
-
       </div>
-
     </div>
-
-  </div>
+  </Modal>
 </template>
 
-
 <script setup>
-
-import { ref } from "vue";
-
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 
+import Modal from "../ui/Modal.vue";
 import { useProjectStore } from "../../stores/project.js";
 
-
 const props = defineProps({
-
   project: {
-
-    type:Object,
-
-    required:true
-
-  }
-
+    type: Object,
+    required: true,
+  },
 });
 
-
-const emit = defineEmits([
-  "close"
-]);
-
+const emit = defineEmits(["close"]);
 
 const router = useRouter();
-
 const projectStore = useProjectStore();
-
 
 const loading = ref(false);
 
+const isOpen = computed({
+  get() {
+    return true;
+  },
 
+  set(value) {
+    if (!value && !loading.value) {
+      close();
+    }
+  },
+});
 
-function close(){
-
-  emit("close");
-
-}
-
-
-
-async function remove(){
-
-  try {
-
-    loading.value = true;
-
-
-    await projectStore.deleteProject(
-      props.project.id
-    );
-
-
-    await router.push("/projects");
-
-
-  } catch(error){
-
-    console.error(
-      error
-    );
-
-  } finally {
-
-    loading.value = false;
-
+function close() {
+  if (loading.value) {
+    return;
   }
 
+  emit("close");
 }
 
+async function remove() {
+  if (loading.value) {
+    return;
+  }
+
+  try {
+    loading.value = true;
+
+    await projectStore.deleteProject(props.project.id);
+
+    await router.push({
+      name: "projects",
+    });
+  } catch (error) {
+    console.error("Erro ao excluir projeto:", error);
+  } finally {
+    loading.value = false;
+  }
+}
 </script>
 
-
 <style scoped>
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-.overlay {
-
-  position:fixed;
-
-  inset:0;
-
-  background:rgba(0,0,0,.35);
-
-  backdrop-filter:blur(4px);
-
-  display:flex;
-
-  justify-content:center;
-
-  align-items:center;
-
-  z-index:100;
-
+  text-align: center;
 }
-
-
-.modal {
-
-  width:380px;
-
-  background:white;
-
-  border-radius:18px;
-
-  padding:32px;
-
-  text-align:center;
-
-  box-shadow:0 20px 50px rgba(0,0,0,.15);
-
-}
-
 
 .icon {
+  width: 48px;
+  height: 48px;
 
-  width:48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  height:48px;
+  margin-bottom: 18px;
 
-  margin:0 auto 18px;
+  border-radius: 50%;
 
-  display:flex;
+  background: #fee2e2;
+  color: #dc2626;
 
-  align-items:center;
-
-  justify-content:center;
-
-  border-radius:50%;
-
-  background:#fee2e2;
-
-  color:#dc2626;
-
-  font-size:24px;
-
-  font-weight:700;
-
+  font-size: 22px;
+  font-weight: 700;
 }
 
+.confirmation h2 {
+  margin: 0;
 
-h2 {
+  color: #111;
 
-  margin:0;
-
-  font-size:22px;
-
-  color:#111;
-
+  font-size: 21px;
+  font-weight: 600;
 }
 
+.confirmation p {
+  max-width: 360px;
 
-p {
+  margin: 12px 0 0;
 
-  margin-top:12px;
+  color: #666;
 
-  color:#666;
-
-  line-height:1.5;
-
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-
-strong {
-
-  color:#111;
-
+.confirmation strong {
+  color: #111;
+  font-weight: 600;
 }
 
+.warning {
+  font-size: 12px !important;
+  color: #999 !important;
+}
 
 .actions {
+  width: 100%;
 
-  margin-top:28px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 
-  display:flex;
-
-  justify-content:center;
-
-  gap:12px;
-
+  margin-top: 28px;
 }
 
+.button {
+  height: 38px;
 
-button {
+  padding: 0 16px;
 
-  padding:10px 18px;
+  border-radius: 9px;
 
-  border-radius:10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
 
-  border:none;
+  cursor: pointer;
 
-  cursor:pointer;
-
-  font-weight:500;
-
-  transition:.2s;
-
+  transition: 0.2s ease;
 }
-
 
 .cancel {
+  border: 1px solid #e5e5e5;
 
-  background:#f3f4f6;
-
-  color:#333;
-
+  background: #fff;
+  color: #444;
 }
-
 
 .cancel:hover {
-
-  background:#e5e7eb;
-
+  background: #f5f5f5;
+  border-color: #d4d4d4;
 }
-
 
 .delete {
+  border: 1px solid #dc2626;
 
-  background:#dc2626;
-
-  color:white;
-
+  background: #dc2626;
+  color: #fff;
 }
-
 
 .delete:hover {
-
-  background:#b91c1c;
-
-  transform:translateY(-1px);
-
+  border-color: #b91c1c;
+  background: #b91c1c;
 }
 
-
-.delete:disabled {
-
-  opacity:.6;
-
-  cursor:not-allowed;
-
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
+@media (max-width: 500px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .button {
+    width: 100%;
+  }
+}
 </style>

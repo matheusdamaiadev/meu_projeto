@@ -1,185 +1,161 @@
 <template>
-
   <Teleport to="body">
-
     <Transition name="modal">
-
-      <div
-        v-if="modelValue"
-        class="overlay"
-        @click.self="close"
-      >
-
+      <div v-if="modelValue" class="overlay" @click.self="close">
         <Card class="modal">
-
-          <div
-            v-if="title || $slots.header"
-            class="header"
-          >
-
+          <div v-if="title || $slots.header" class="header">
             <slot name="header">
-
               <h2>{{ title }}</h2>
-
             </slot>
 
-            <button
-              class="close"
-              @click="close"
-            >
-              ✕
+            <button class="close" type="button" aria-label="Fechar" @click="close">
+              ×
             </button>
-
           </div>
-
 
           <div class="content">
-
             <slot />
-
           </div>
-
         </Card>
-
       </div>
-
     </Transition>
-
   </Teleport>
-
 </template>
 
 <script setup>
-
 import Card from "./Card.vue";
 
 defineProps({
-
   modelValue: {
     type: Boolean,
-    default: false
+    default: false,
   },
 
   title: {
     type: String,
-    default: ""
-  }
+    default: "",
+  },
+});
 
-})
-
-const emit = defineEmits([
-  "update:modelValue"
-])
+const emit = defineEmits(["update:modelValue"]);
 
 function close() {
-
-  emit("update:modelValue", false)
-
+  emit("update:modelValue", false);
 }
-
 </script>
 
 <style scoped>
+.overlay {
+  position: fixed;
+  inset: 0;
 
-.overlay{
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  position:fixed;
+  padding: 20px;
+  box-sizing: border-box;
 
-  inset:0;
+  background: rgba(0, 0, 0, 0.35);
 
-  background:rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 
-  display:flex;
-
-  justify-content:center;
-
-  align-items:center;
-
-  z-index:999;
-
+  z-index: 999;
 }
 
-.modal{
+.modal {
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
 
-  width:100%;
+  overflow: auto;
 
-  max-width:600px;
+  box-sizing: border-box;
 
-  max-height:90vh;
-
-  overflow:auto;
-
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
 }
 
-.header{
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-  display:flex;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
 
-  justify-content:space-between;
-
-  align-items:center;
-
-  padding-bottom:24px;
-
-  margin-bottom:24px;
-
-  border-bottom:1px solid #e5e5e5;
-
+  border-bottom: 1px solid #e5e5e5;
 }
 
-.header h2{
+.header h2 {
+  margin: 0;
 
-  font-size:22px;
+  color: #111;
 
-  font-weight:600;
-
+  font-size: 21px;
+  font-weight: 600;
 }
 
-.close{
+.close {
+  width: 36px;
+  height: 36px;
 
-  width:40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  height:40px;
+  border: none;
+  border-radius: 9px;
 
-  border:none;
+  background: transparent;
+  color: #666;
 
-  border-radius:10px;
+  font-family: inherit;
+  font-size: 24px;
+  line-height: 1;
 
-  background:transparent;
+  cursor: pointer;
 
-  cursor:pointer;
-
-  font-size:18px;
-
-  transition:.2s;
-
+  transition: 0.2s ease;
 }
 
-.close:hover{
+.close:hover {
+  background: #f5f5f5;
+  color: #111;
+}
 
-  background:#f5f5f5;
-
+.content {
+  width: 100%;
 }
 
 .modal-enter-active,
-.modal-leave-active{
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
 
-  transition:.2s ease;
-
+.modal-enter-active .modal,
+.modal-leave-active .modal {
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .modal-enter-from,
-.modal-leave-to{
-
-  opacity:0;
-
+.modal-leave-to {
+  opacity: 0;
 }
 
 .modal-enter-from .modal,
-.modal-leave-to .modal{
-
-  transform:translateY(20px) scale(.98);
-
+.modal-leave-to .modal {
+  opacity: 0;
+  transform: translateY(16px) scale(0.98);
 }
 
+@media (max-width: 600px) {
+  .overlay {
+    padding: 12px;
+  }
+
+  .modal {
+    max-height: 94vh;
+  }
+}
 </style>

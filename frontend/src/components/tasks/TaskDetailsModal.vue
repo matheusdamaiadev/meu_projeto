@@ -1,12 +1,9 @@
-```vue
 <template>
   <Modal v-model="isOpen" title="Detalhes da tarefa">
     <div class="details">
-      <!-- VISUALIZAÇÃO -->
-
       <template v-if="!editing">
         <div class="detail-section">
-          <span class="detail-label"> Título </span>
+          <span class="detail-label">Título</span>
 
           <h3 class="detail-title" :class="{ completed: task.completed }">
             {{ task.title }}
@@ -14,7 +11,7 @@
         </div>
 
         <div class="detail-section">
-          <span class="detail-label"> Descrição </span>
+          <span class="detail-label">Descrição</span>
 
           <p v-if="task.description" class="detail-description">
             {{ task.description }}
@@ -24,7 +21,7 @@
         </div>
 
         <div class="detail-section">
-          <span class="detail-label"> Status </span>
+          <span class="detail-label">Status</span>
 
           <span class="status" :class="{ completed: task.completed }">
             {{ task.completed ? "Concluída" : "Pendente" }}
@@ -32,14 +29,17 @@
         </div>
 
         <div class="actions">
-          <button class="edit-button" @click="startEditing">Editar</button>
+          <button type="button" class="button secondary" @click="startEditing">
+            Editar
+          </button>
 
-          <button class="complete-button" @click="toggleCompleted">
+          <button type="button" class="button secondary" @click="toggleCompleted">
             {{ task.completed ? "Marcar como pendente" : "Marcar como concluída" }}
           </button>
 
           <button
-            class="delete-button"
+            type="button"
+            class="button danger"
             :class="{ confirming: deleteConfirming }"
             @click="handleDelete"
           >
@@ -50,45 +50,54 @@
         </div>
       </template>
 
-      <!-- EDIÇÃO -->
-
       <template v-else>
-        <div class="form">
+        <form class="form" @submit.prevent="saveChanges">
           <div class="form-group">
-            <label> Título </label>
+            <label for="edit-task-title">Título</label>
 
             <input
+              id="edit-task-title"
               v-model="editTitle"
               type="text"
               maxlength="200"
               placeholder="Título da tarefa"
+              :disabled="saving"
             />
           </div>
 
           <div class="form-group">
-            <label> Descrição </label>
+            <label for="edit-task-description">Descrição</label>
 
             <textarea
+              id="edit-task-description"
               v-model="editDescription"
               rows="7"
               placeholder="Descrição da tarefa"
+              :disabled="saving"
             ></textarea>
           </div>
 
           <p v-if="error" class="error">Não foi possível salvar a tarefa.</p>
 
           <div class="actions">
-            <button class="cancel-button" @click="cancelEditing">Cancelar</button>
+            <button
+              type="button"
+              class="button secondary"
+              :disabled="saving"
+              @click="cancelEditing"
+            >
+              Cancelar
+            </button>
 
             <button
-              class="save-button"
+              type="submit"
+              class="button primary"
               :disabled="saving || !editTitle.trim()"
-              @click="saveChanges"
             >
               {{ saving ? "Salvando..." : "Salvar alterações" }}
             </button>
           </div>
-        </div>
+        </form>
       </template>
     </div>
   </Modal>
@@ -96,23 +105,19 @@
 
 <script setup>
 import { ref, watch } from "vue";
-
 import { Trash2 } from "lucide-vue-next";
 
 import Modal from "../ui/Modal.vue";
-
 import { useTaskStore } from "../../stores/task";
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
-
     default: false,
   },
 
   task: {
     type: Object,
-
     required: true,
   },
 });
@@ -122,58 +127,42 @@ const emit = defineEmits(["update:modelValue", "deleted"]);
 const taskStore = useTaskStore();
 
 const isOpen = ref(props.modelValue);
-
 const editing = ref(false);
-
 const saving = ref(false);
-
 const error = ref(false);
-
 const deleteConfirming = ref(false);
 
 const editTitle = ref("");
-
 const editDescription = ref("");
 
 watch(
   () => props.modelValue,
-
   (value) => {
     isOpen.value = value;
 
     if (value) {
       editing.value = false;
-
       deleteConfirming.value = false;
-
       error.value = false;
     }
   }
 );
 
-watch(
-  isOpen,
-
-  (value) => {
-    emit("update:modelValue", value);
-  }
-);
+watch(isOpen, (value) => {
+  emit("update:modelValue", value);
+});
 
 function startEditing() {
   editTitle.value = props.task.title;
-
   editDescription.value = props.task.description || "";
 
   editing.value = true;
-
   deleteConfirming.value = false;
-
   error.value = false;
 }
 
 function cancelEditing() {
   editing.value = false;
-
   error.value = false;
 }
 
@@ -183,7 +172,6 @@ async function saveChanges() {
   }
 
   saving.value = true;
-
   error.value = false;
 
   try {
@@ -195,7 +183,6 @@ async function saveChanges() {
     editing.value = false;
   } catch (err) {
     console.error("Erro ao editar tarefa:", err);
-
     error.value = true;
   } finally {
     saving.value = false;
@@ -204,13 +191,9 @@ async function saveChanges() {
 
 async function toggleCompleted() {
   try {
-    await taskStore.updateTask(
-      props.task.id,
-
-      {
-        completed: !props.task.completed,
-      }
-    );
+    await taskStore.updateTask(props.task.id, {
+      completed: !props.task.completed,
+    });
   } catch (err) {
     console.error("Erro ao alterar status:", err);
   }
@@ -219,7 +202,6 @@ async function toggleCompleted() {
 async function handleDelete() {
   if (!deleteConfirming.value) {
     deleteConfirming.value = true;
-
     return;
   }
 
@@ -227,7 +209,6 @@ async function handleDelete() {
     await taskStore.deleteTask(props.task.id);
 
     deleteConfirming.value = false;
-
     isOpen.value = false;
 
     emit("deleted");
@@ -240,19 +221,13 @@ async function handleDelete() {
 <style scoped>
 .details {
   display: flex;
-
   flex-direction: column;
-
   gap: 24px;
 }
 
-/* SEÇÕES */
-
 .detail-section {
   display: flex;
-
   flex-direction: column;
-
   gap: 8px;
 }
 
@@ -260,15 +235,11 @@ async function handleDelete() {
   color: #999;
 
   font-size: 11px;
-
   font-weight: 500;
 
   text-transform: uppercase;
-
   letter-spacing: 0.04em;
 }
-
-/* TÍTULO */
 
 .detail-title {
   margin: 0;
@@ -276,23 +247,17 @@ async function handleDelete() {
   color: #111;
 
   font-size: 22px;
-
   font-weight: 600;
-
   line-height: 1.4;
 
   overflow-wrap: anywhere;
-
   word-break: break-word;
 }
 
 .detail-title.completed {
   color: #999;
-
   text-decoration: line-through;
 }
-
-/* DESCRIÇÃO */
 
 .detail-description {
   margin: 0;
@@ -300,13 +265,10 @@ async function handleDelete() {
   color: #555;
 
   font-size: 14px;
-
   line-height: 1.7;
 
   white-space: pre-wrap;
-
   overflow-wrap: anywhere;
-
   word-break: break-word;
 }
 
@@ -314,11 +276,8 @@ async function handleDelete() {
   margin: 0;
 
   color: #aaa;
-
   font-size: 14px;
 }
-
-/* STATUS */
 
 .status {
   width: fit-content;
@@ -326,7 +285,6 @@ async function handleDelete() {
   padding: 5px 9px;
 
   border: 1px solid #ddd;
-
   border-radius: 6px;
 
   color: #666;
@@ -336,31 +294,23 @@ async function handleDelete() {
 
 .status.completed {
   background: #f5f5f5;
-
   color: #222;
 }
 
-/* AÇÕES */
-
 .actions {
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 8px;
 
   padding-top: 4px;
 }
 
-.actions button {
+.button {
   height: 38px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 7px;
 
   padding: 0 14px;
@@ -368,9 +318,7 @@ async function handleDelete() {
   border-radius: 9px;
 
   font-family: inherit;
-
   font-size: 13px;
-
   font-weight: 500;
 
   cursor: pointer;
@@ -378,83 +326,61 @@ async function handleDelete() {
   transition: 0.2s ease;
 }
 
-/* EDITAR */
-
-.edit-button {
+.button.secondary {
   border: 1px solid #e5e5e5;
 
   background: #fff;
-
   color: #333;
 }
 
-.edit-button:hover {
+.button.secondary:hover {
   background: #f5f5f5;
-
   border-color: #d4d4d4;
 }
 
-/* CONCLUIR */
+.button.primary {
+  border: 1px solid #111;
 
-.complete-button {
-  border: 1px solid #e5e5e5;
-
-  background: #fff;
-
-  color: #333;
-}
-
-.complete-button:hover {
-  background: #f5f5f5;
-
-  border-color: #d4d4d4;
-}
-
-/* EXCLUIR */
-
-.delete-button {
-  border: 1px solid #fecaca;
-
-  background: #fff;
-
-  color: #dc2626;
-}
-
-.delete-button:hover {
-  background: #fef2f2;
-
-  border-color: #fca5a5;
-}
-
-.delete-button.confirming {
-  border-color: #b91c1c;
-
-  background: #dc2626;
-
+  background: #111;
   color: #fff;
 }
 
-.delete-button.confirming:hover {
-  border-color: #991b1b;
+.button.primary:hover {
+  background: #333;
+}
 
+.button.danger {
+  border: 1px solid #fecaca;
+
+  background: #fff;
+  color: #dc2626;
+}
+
+.button.danger:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.button.danger.confirming {
+  border-color: #b91c1c;
+
+  background: #dc2626;
+  color: #fff;
+}
+
+.button.danger.confirming:hover {
   background: #b91c1c;
 }
 
-/* FORMULÁRIO */
-
 .form {
   display: flex;
-
   flex-direction: column;
-
   gap: 20px;
 }
 
 .form-group {
   display: flex;
-
   flex-direction: column;
-
   gap: 7px;
 }
 
@@ -462,7 +388,6 @@ async function handleDelete() {
   color: #444;
 
   font-size: 13px;
-
   font-weight: 500;
 }
 
@@ -472,20 +397,15 @@ async function handleDelete() {
 
   box-sizing: border-box;
 
-  padding: 11px 12px;
-
   border: 1px solid #ddd;
-
   border-radius: 9px;
 
   outline: none;
 
   background: #fff;
-
   color: #111;
 
   font-family: inherit;
-
   font-size: 14px;
 
   transition: 0.2s ease;
@@ -493,75 +413,41 @@ async function handleDelete() {
 
 .form-group input {
   height: 42px;
+  padding: 0 12px;
 }
 
 .form-group textarea {
-  resize: vertical;
+  padding: 11px 12px;
 
+  resize: vertical;
   line-height: 1.5;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   border-color: #111;
-
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
-
-/* ERRO */
 
 .error {
   margin: 0;
 
   color: #dc2626;
-
   font-size: 12px;
 }
 
-/* CANCELAR */
-
-.cancel-button {
-  border: 1px solid #e5e5e5;
-
-  background: #fff;
-
-  color: #555;
-}
-
-.cancel-button:hover {
-  background: #f5f5f5;
-}
-
-/* SALVAR */
-
-.save-button {
-  border: 1px solid #111;
-
-  background: #111;
-
-  color: #fff;
-}
-
-.save-button:hover {
-  background: #333;
-}
-
-.save-button:disabled {
+.button:disabled {
   opacity: 0.5;
-
   cursor: not-allowed;
 }
-
-/* MOBILE */
 
 @media (max-width: 600px) {
   .actions {
     flex-direction: column;
   }
 
-  .actions button {
+  .button {
     width: 100%;
   }
 }
 </style>
-```
