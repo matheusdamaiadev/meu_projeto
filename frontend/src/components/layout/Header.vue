@@ -31,12 +31,6 @@
         <Search :size="18" />
       </button>
 
-      <!-- NOTIFICAÇÕES -->
-
-      <button class="icon-button" title="Notificações">
-        <Bell :size="18" />
-      </button>
-
       <!-- PERFIL -->
 
       <div class="profile-wrapper">
@@ -50,7 +44,7 @@
               {{ username }}
             </strong>
 
-            <span> Usuário </span>
+            <span>Usuário</span>
           </div>
 
           <ChevronDown :size="16" />
@@ -67,35 +61,53 @@
     </div>
   </header>
 </template>
-
+```vue
 <script setup>
-import { ref, computed, nextTick, watch } from "vue";
+import { ref, computed, nextTick, watch, onMounted } from "vue";
 
 import { useRoute, useRouter, RouterLink } from "vue-router";
 
-import { Search, Bell, ChevronDown } from "lucide-vue-next";
+import { Search, ChevronDown } from "lucide-vue-next";
 
 import { useAuthStore } from "../../stores/auth";
-
 import { useProjectStore } from "../../stores/project";
-
 import { useTaskStore } from "../../stores/task";
+import { useFriendStore } from "../../stores/friend";
+
+import NotificationService from "../../services/NotificationService";
 
 const route = useRoute();
-
 const router = useRouter();
 
 const authStore = useAuthStore();
-
 const projectStore = useProjectStore();
-
 const taskStore = useTaskStore();
+const friendStore = useFriendStore();
 
 const open = ref(false);
 
 const searchOpen = ref(false);
-
 const searchInput = ref(null);
+
+const notifications = ref([]);
+
+/* =========================
+   NOTIFICAÇÕES
+========================= */
+
+const unreadNotifications = computed(() => {
+  return notifications.value.filter((notification) => !notification.read).length;
+});
+
+const loadNotifications = async () => {
+  try {
+    notifications.value = await NotificationService.getNotifications();
+  } catch (error) {
+    console.error("Erro ao carregar notificações:", error);
+
+    notifications.value = [];
+  }
+};
 
 /* =========================
    BUSCA
@@ -105,10 +117,18 @@ const isProjectPage = computed(() => {
   return route.name === "project";
 });
 
+const isFriendsPage = computed(() => {
+  return route.name === "friends";
+});
+
 const searchValue = computed({
   get() {
     if (isProjectPage.value) {
       return taskStore.search;
+    }
+
+    if (isFriendsPage.value) {
+      return friendStore.search;
     }
 
     return projectStore.search;
@@ -117,6 +137,8 @@ const searchValue = computed({
   set(value) {
     if (isProjectPage.value) {
       taskStore.search = value;
+    } else if (isFriendsPage.value) {
+      friendStore.search = value;
     } else {
       projectStore.search = value;
     }
@@ -124,7 +146,15 @@ const searchValue = computed({
 });
 
 const searchPlaceholder = computed(() => {
-  return isProjectPage.value ? "Buscar tarefas..." : "Buscar projetos...";
+  if (isProjectPage.value) {
+    return "Buscar tarefas...";
+  }
+
+  if (isFriendsPage.value) {
+    return "Procurar amigos...";
+  }
+
+  return "Buscar projetos...";
 });
 
 /* =========================
@@ -156,15 +186,16 @@ function closeSearch() {
 
   if (isProjectPage.value) {
     taskStore.search = "";
+  } else if (isFriendsPage.value) {
+    friendStore.search = "";
   } else {
     projectStore.search = "";
   }
 }
 
-/*
- * Quando muda de página,
- * limpa a busca anterior.
- */
+/* =========================
+   MUDANÇA DE PÁGINA
+========================= */
 
 watch(
   () => route.name,
@@ -172,6 +203,11 @@ watch(
     searchOpen.value = false;
 
     taskStore.search = "";
+    friendStore.search = "";
+
+    if (route.name === "notifications") {
+      loadNotifications();
+    }
   }
 );
 
@@ -192,40 +228,57 @@ function logout() {
 const pages = {
   dashboard: {
     title: "Dashboard",
-
     description: "Visão geral dos seus projetos",
   },
 
   projects: {
     title: "Projetos",
-
     description: "Gerencie todos os seus projetos",
   },
 
   project: {
     title: "Projeto",
-
     description: "Detalhes e tarefas do projeto",
+  },
+
+  friends: {
+    title: "Amigos",
+    description: "Gerencie seus amigos e convide pessoas para seus projetos",
   },
 
   profile: {
     title: "Perfil",
-
     description: "Informações da sua conta",
   },
 
   settings: {
     title: "Configurações",
-
     description: "Personalize sua experiência",
+  },
+
+  notifications: {
+    title: "Notificações",
+    description: "",
   },
 };
 
 const pageData = computed(() => {
+  if (route.name === "notifications") {
+    return {
+      title: "Notificações",
+
+      description:
+        unreadNotifications.value > 0
+          ? `${unreadNotifications.value} não lida${
+              unreadNotifications.value === 1 ? "" : "s"
+            }`
+          : "Todas as notificações foram lidas",
+    };
+  }
+
   return (
     pages[route.name] || {
       title: "Momentum",
-
       description: "",
     }
   );
@@ -238,7 +291,18 @@ const pageTitle = computed(() => {
 const pageDescription = computed(() => {
   return pageData.value.description;
 });
+
+/* =========================
+   INICIALIZAÇÃO
+========================= */
+
+onMounted(() => {
+  if (route.name === "notifications") {
+    loadNotifications();
+  }
+});
 </script>
+```
 
 <style scoped>
 .header {
@@ -257,6 +321,10 @@ const pageDescription = computed(() => {
   padding: 0 32px;
 }
 
+/* =========================
+   PÁGINA
+========================= */
+
 .page-info h1 {
   margin: 0;
 
@@ -273,6 +341,10 @@ const pageDescription = computed(() => {
   font-size: 14px;
 }
 
+/* =========================
+   AÇÕES
+========================= */
+
 .actions {
   display: flex;
 
@@ -281,7 +353,9 @@ const pageDescription = computed(() => {
   gap: 12px;
 }
 
-/* PESQUISA */
+/* =========================
+   PESQUISA
+========================= */
 
 .search-box {
   width: 260px;
@@ -367,7 +441,9 @@ const pageDescription = computed(() => {
   color: #111;
 }
 
-/* BOTÕES */
+/* =========================
+   BOTÕES
+========================= */
 
 .icon-button {
   width: 40px;
@@ -393,7 +469,9 @@ const pageDescription = computed(() => {
   background: #f5f5f5;
 }
 
-/* PERFIL */
+/* =========================
+   PERFIL
+========================= */
 
 .profile-wrapper {
   position: relative;
@@ -505,4 +583,3 @@ const pageDescription = computed(() => {
   color: white;
 }
 </style>
-```
