@@ -4,52 +4,47 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
     ProjectSerializer,
-    TaskSerializer
+    TaskSerializer,
+    EmailTokenObtainPairSerializer,
 )
 
 from .models import Project, Task
 
 
 class RegisterView(CreateAPIView):
-
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
 
-class MeView(APIView):
+class EmailTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
 
+
+class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-
         serializer = UserSerializer(request.user)
-
         return Response(serializer.data)
 
 
 class ProjectViewSet(ModelViewSet):
-
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-
-        return Project.objects.filter(
-            user=self.request.user
-        )
+        return Project.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-
-        serializer.save(
-            user=self.request.user
-        )
+        serializer.save(user=self.request.user)
 
     def perform_update(self, serializer):
-
         project = self.get_object()
 
         new_is_pinned = serializer.validated_data.get(
@@ -65,7 +60,6 @@ class ProjectViewSet(ModelViewSet):
             ).count()
 
             if pinned_count >= 5:
-
                 from rest_framework.exceptions import ValidationError
 
                 raise ValidationError({
@@ -76,7 +70,6 @@ class ProjectViewSet(ModelViewSet):
 
 
 class TaskViewSet(ModelViewSet):
-
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 

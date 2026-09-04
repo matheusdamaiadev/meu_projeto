@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="project-page">
     <button class="back-button" @click="goBack">
@@ -58,7 +57,7 @@
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 import { useRoute, useRouter } from "vue-router";
 
@@ -98,9 +97,33 @@ const showDelete = ref(false);
 
 const showTaskForm = ref(false);
 
-onMounted(async () => {
-  await projectStore.fetchProject(route.params.id);
-});
+/* =========================
+   CARREGAR PROJETO
+========================= */
+
+watch(
+  () => route.params.id,
+
+  async (id) => {
+    if (!id) {
+      return;
+    }
+
+    showEdit.value = false;
+    showDelete.value = false;
+    showTaskForm.value = false;
+
+    await projectStore.fetchProject(id);
+  },
+
+  {
+    immediate: true,
+  }
+);
+
+/* =========================
+   VOLTAR
+========================= */
 
 function goBack() {
   router.push({
@@ -108,13 +131,25 @@ function goBack() {
   });
 }
 
+/* =========================
+   EDITAR
+========================= */
+
 function openEdit() {
   showEdit.value = true;
 }
 
+/* =========================
+   EXCLUIR
+========================= */
+
 function openDelete() {
   showDelete.value = true;
 }
+
+/* =========================
+   PROJETO EXCLUÍDO
+========================= */
 
 async function handleDeleted() {
   showDelete.value = false;
@@ -263,4 +298,3 @@ async function handleDeleted() {
   }
 }
 </style>
-```
