@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Project, ProjectMember
+from ..models import Friendship, Notification, Project, ProjectMember
 from ..serializers import ProjectMemberSerializer, ProjectSerializer
 
 
@@ -40,6 +40,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
         return Project.objects.filter(
             models.Q(user=user) | models.Q(members__user=user)
         ).distinct()
@@ -84,6 +85,7 @@ class JoinProjectView(APIView):
             )
 
         code = code.upper()
+
         project = Project.objects.filter(join_code=code).first()
 
         if not project:
@@ -99,7 +101,8 @@ class JoinProjectView(APIView):
             )
 
         member = ProjectMember.objects.filter(
-            project=project, user=request.user
+            project=project,
+            user=request.user,
         ).first()
 
         if member:
@@ -109,11 +112,17 @@ class JoinProjectView(APIView):
             )
 
         member = ProjectMember.objects.create(
-            project=project, user=request.user, role="viewer"
+            project=project,
+            user=request.user,
+            role="viewer",
         )
 
         serializer = ProjectMemberSerializer(member)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class ProjectMembersView(APIView):
@@ -132,16 +141,23 @@ class ProjectMembersView(APIView):
             )
 
         permission = ProjectPermission()
+
         if not permission.has_permission(request, project):
             return Response(
                 {"detail": "Você não participa deste projeto."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        members = ProjectMember.objects.filter(project=project).select_related(
-            "user"
+        members = (
+            ProjectMember.objects.filter(project=project)
+            .select_related("user")
         )
-        serializer = ProjectMemberSerializer(members, many=True)
+
+        serializer = ProjectMemberSerializer(
+            members,
+            many=True,
+        )
+
         return Response(serializer.data)
 
     def post(self, request, project_id):
@@ -154,6 +170,7 @@ class ProjectMembersView(APIView):
             )
 
         permission = ProjectPermission()
+
         if not permission.can_edit(request, project):
             return Response(
                 {"detail": "Você não tem permissão para gerenciar membros."},
@@ -163,18 +180,32 @@ class ProjectMembersView(APIView):
         username = request.data.get("username")
         role = request.data.get("role", "viewer")
 
+        if not username:
+            return Response(
+                {"detail": "Nome de usuário não informado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if role not in ["admin", "viewer"]:
             return Response(
                 {"detail": "Função inválida."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User.objects.filter(username=username).first()
+        user = User.objects.filter(
+            username__iexact=username.strip()
+        ).first()
 
         if not user:
             return Response(
                 {"detail": "Usuário não encontrado."},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if user == request.user:
+            return Response(
+                {"detail": "Você não pode adicionar a si mesmo."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if user == project.user:
@@ -183,22 +214,80 @@ class ProjectMembersView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        existing = ProjectMember.objects.filter(
-            project=project, user=user
+        # Verifica se os usuários são amigos.
+        friendship_exists = Friendship.objects.filter(
+            status="accepted"
+        ).filter(
+            models.Q(
+                user=request.user,
+                friend=user,
+            )
+            | models.Q(
+                user=user,
+                friend=request.user,
+            )
+        ).exists()
+
+        if not friendship_exists:
+            return Response(
+                {
+                    "detail": (
+                        "Você precisa ser amigo deste usuário "
+                        "para convidá-lo."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Verifica se o usuário já participa do projeto.
+        existing_member = ProjectMember.objects.filter(
+            project=project,
+            user=user,
         ).first()
 
-        if existing:
+        if existing_member:
             return Response(
                 {"detail": "Este usuário já participa do projeto."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        member = ProjectMember.objects.create(
-            project=project, user=user, role=role
+        # Verifica se já existe um convite pendente.
+        existing_invite = Notification.objects.filter(
+            recipient=user,
+            sender=request.user,
+            project=project,
+            type="project_invite",
+            read=False,
+            accepted=False,
+        ).first()
+
+        if existing_invite:
+            return Response(
+                {
+                    "detail": (
+                        "Este usuário já possui um convite pendente "
+                        "para este projeto."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Cria o convite.
+        notification = Notification.objects.create(
+            recipient=user,
+            sender=request.user,
+            type="project_invite",
+            project=project,
+            role=role,
         )
 
-        serializer = ProjectMemberSerializer(member)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "detail": "Convite enviado com sucesso.",
+                "notification_id": notification.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     def patch(self, request, project_id, member_id):
         project = self.get_project(project_id)
@@ -210,6 +299,7 @@ class ProjectMembersView(APIView):
             )
 
         permission = ProjectPermission()
+
         if not permission.can_edit(request, project):
             return Response(
                 {"detail": "Você não tem permissão para gerenciar membros."},
@@ -217,7 +307,8 @@ class ProjectMembersView(APIView):
             )
 
         member = ProjectMember.objects.filter(
-            id=member_id, project=project
+            id=member_id,
+            project=project,
         ).first()
 
         if not member:
@@ -227,6 +318,7 @@ class ProjectMembersView(APIView):
             )
 
         role = request.data.get("role")
+
         if role not in ["admin", "viewer"]:
             return Response(
                 {"detail": "Função inválida."},
@@ -237,6 +329,7 @@ class ProjectMembersView(APIView):
         member.save(update_fields=["role"])
 
         serializer = ProjectMemberSerializer(member)
+
         return Response(serializer.data)
 
     def delete(self, request, project_id, member_id):
@@ -249,6 +342,7 @@ class ProjectMembersView(APIView):
             )
 
         permission = ProjectPermission()
+
         if not permission.can_edit(request, project):
             return Response(
                 {"detail": "Você não tem permissão para gerenciar membros."},
@@ -256,7 +350,8 @@ class ProjectMembersView(APIView):
             )
 
         member = ProjectMember.objects.filter(
-            id=member_id, project=project
+            id=member_id,
+            project=project,
         ).first()
 
         if not member:
@@ -266,4 +361,5 @@ class ProjectMembersView(APIView):
             )
 
         member.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,3 +1,4 @@
+
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -15,20 +16,53 @@ from .views import (
     MeView,
     NotificationListView,
     NotificationReadView,
+    ProjectInviteResponseView,
     ProjectMembersView,
     ProjectViewSet,
     RegisterView,
     TaskViewSet,
 )
 
+
 router = DefaultRouter()
+
 router.register("projects", ProjectViewSet, basename="projects")
 router.register("tasks", TaskViewSet, basename="tasks")
 
+
 urlpatterns = [
-    path("register/", RegisterView.as_view(), name="register"),
-    path("me/", MeView.as_view(), name="me"),
-    path("projects/join/", JoinProjectView.as_view(), name="project-join"),
+    # ========================================================
+    # AUTENTICAÇÃO
+    # ========================================================
+    path(
+        "register/",
+        RegisterView.as_view(),
+        name="register",
+    ),
+    path(
+        "me/",
+        MeView.as_view(),
+        name="me",
+    ),
+    path(
+        "token/",
+        EmailTokenObtainPairView.as_view(),
+        name="token_obtain_pair",
+    ),
+    path(
+        "token/refresh/",
+        TokenRefreshView.as_view(),
+        name="token_refresh",
+    ),
+
+    # ========================================================
+    # PROJETOS
+    # ========================================================
+    path(
+        "projects/join/",
+        JoinProjectView.as_view(),
+        name="project-join",
+    ),
     path(
         "projects/<int:project_id>/members/",
         ProjectMembersView.as_view(),
@@ -39,15 +73,30 @@ urlpatterns = [
         ProjectMembersView.as_view(),
         name="project-member-detail",
     ),
-    path("token/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
     # ========================================================
     # AMIZADES
     # ========================================================
-    path("friends/", FriendListView.as_view(), name="friends"),
-    path("friends/search/", FriendSearchView.as_view(), name="friend-search"),
-    path("friends/pending/", FriendPendingView.as_view(), name="friend-pending"),
-    path("friends/request/", FriendRequestView.as_view(), name="friend-request"),
+    path(
+        "friends/",
+        FriendListView.as_view(),
+        name="friends",
+    ),
+    path(
+        "friends/search/",
+        FriendSearchView.as_view(),
+        name="friend-search",
+    ),
+    path(
+        "friends/pending/",
+        FriendPendingView.as_view(),
+        name="friend-pending",
+    ),
+    path(
+        "friends/request/",
+        FriendRequestView.as_view(),
+        name="friend-request",
+    ),
     path(
         "friends/<int:friendship_id>/accept/",
         FriendAcceptView.as_view(),
@@ -63,6 +112,7 @@ urlpatterns = [
         FriendDeleteView.as_view(),
         name="friend-delete",
     ),
+
     # ========================================================
     # NOTIFICAÇÕES
     # ========================================================
@@ -76,5 +126,17 @@ urlpatterns = [
         NotificationReadView.as_view(),
         name="notification-read",
     ),
-    path("", include(router.urls)),
+    path(
+        "notifications/<int:notification_id>/project-invite/",
+        ProjectInviteResponseView.as_view(),
+        name="project-invite-response",
+    ),
+
+    # ========================================================
+    # ROUTER
+    # ========================================================
+    path(
+        "",
+        include(router.urls),
+    ),
 ]

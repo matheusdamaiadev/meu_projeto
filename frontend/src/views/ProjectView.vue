@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="project-page">
     <button class="back-button" @click="goBack">
@@ -12,6 +13,10 @@
 
     <div v-else-if="project">
       <ProjectHeader :project="project" @edit="openEdit" @delete="openDelete" />
+
+      <!-- MEMBROS DO PROJETO -->
+
+      <ProjectMembers :project="project" />
 
       <!-- PROGRESSO DO PROJETO -->
 
@@ -66,6 +71,8 @@ import { ArrowLeft } from "lucide-vue-next";
 import { useProjectStore } from "../stores/project";
 
 import ProjectHeader from "../components/project/ProjectHeader.vue";
+
+import ProjectMembers from "../components/project/ProjectMembers.vue";
 
 import ProjectEditModal from "../components/project/ProjectEditModal.vue";
 

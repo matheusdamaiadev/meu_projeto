@@ -108,3 +108,34 @@ export function deleteProject(id){
 
 
 }
+export function getProjectMembers(projectId) {
+  return api.get(
+    `/projects/${projectId}/members/`
+  );
+}
+
+export function inviteProjectMember(projectId, username, role) {
+  return api.post(
+    `/projects/${projectId}/members/`,
+    {
+      username,
+      role
+    }
+  );
+}
+
+export function updateProjectMember(projectId, memberId, role) {
+  return api.patch(
+    `/projects/${projectId}/members/${memberId}/`,
+    {
+      role
+    }
+  );
+}
+
+export function removeProjectMember(projectId, memberId) {
+  return api.delete(
+    `/projects/${projectId}/members/${memberId}/`
+  );
+}
+

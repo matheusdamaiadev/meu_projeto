@@ -32,7 +32,7 @@
             </p>
 
             <div
-              v-if="!notification.read || !notification.accepted"
+              v-if="!notification.read && !notification.accepted"
               class="notification-actions"
             >
               <button
@@ -67,8 +67,36 @@
             <p>
               {{ notification.sender_username }}
               convidou você para
-              {{ notification.project_name }}.
+              <strong class="project-name">
+                {{ notification.project_name }} </strong
+              >.
             </p>
+
+            <p v-if="notification.role" class="project-role">
+              Função:
+              {{ notification.role === "admin" ? "Administrador" : "Visualizador" }}
+            </p>
+
+            <div
+              v-if="!notification.read && !notification.accepted"
+              class="notification-actions"
+            >
+              <button
+                class="accept-button"
+                :disabled="processingNotification === notification.id"
+                @click="acceptProjectInvite(notification)"
+              >
+                Aceitar
+              </button>
+
+              <button
+                class="reject-button"
+                :disabled="processingNotification === notification.id"
+                @click="rejectProjectInvite(notification)"
+              >
+                Recusar
+              </button>
+            </div>
           </div>
         </template>
 
@@ -89,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 
 import { Bell, UserPlus, Folder } from "lucide-vue-next";
 
@@ -105,14 +133,6 @@ const notifications = ref([]);
 const notificationsLoading = ref(false);
 
 const processingNotification = ref(null);
-
-// ========================================================
-// NOTIFICAÇÕES NÃO LIDAS
-// ========================================================
-
-const unreadNotifications = computed(() => {
-  return notifications.value.filter((notification) => !notification.read).length;
-});
 
 // ========================================================
 // CARREGAR NOTIFICAÇÕES
@@ -182,6 +202,52 @@ const rejectFriend = async (notification) => {
     console.error("Erro ao recusar solicitação:", error);
 
     alert(error.response?.data?.detail || "Não foi possível recusar a solicitação.");
+  } finally {
+    processingNotification.value = null;
+  }
+};
+
+// ========================================================
+// ACEITAR CONVITE DE PROJETO
+// ========================================================
+
+const acceptProjectInvite = async (notification) => {
+  try {
+    processingNotification.value = notification.id;
+
+    await NotificationService.respondToProjectInvite(notification.id, "accept");
+
+    notification.read = true;
+    notification.accepted = true;
+
+    alert(`Você entrou no projeto ${notification.project_name}.`);
+  } catch (error) {
+    console.error("Erro ao aceitar convite:", error);
+
+    alert(error.response?.data?.detail || "Não foi possível aceitar o convite.");
+  } finally {
+    processingNotification.value = null;
+  }
+};
+
+// ========================================================
+// RECUSAR CONVITE DE PROJETO
+// ========================================================
+
+const rejectProjectInvite = async (notification) => {
+  try {
+    processingNotification.value = notification.id;
+
+    await NotificationService.respondToProjectInvite(notification.id, "reject");
+
+    notification.read = true;
+    notification.accepted = false;
+
+    alert("Convite recusado.");
+  } catch (error) {
+    console.error("Erro ao recusar convite:", error);
+
+    alert(error.response?.data?.detail || "Não foi possível recusar o convite.");
   } finally {
     processingNotification.value = null;
   }
@@ -295,6 +361,26 @@ onMounted(() => {
   font-size: 13px;
 
   line-height: 1.5;
+}
+
+.notification-content .project-name {
+  display: inline;
+
+  margin: 0;
+
+  color: #333;
+
+  font-size: inherit;
+
+  font-weight: 600;
+}
+
+.project-role {
+  margin-top: 5px !important;
+
+  font-size: 12px !important;
+
+  color: #999 !important;
 }
 
 /* ========================================================

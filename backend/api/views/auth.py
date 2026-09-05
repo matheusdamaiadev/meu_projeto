@@ -1,9 +1,11 @@
 from django.contrib.auth.models import User
+
 from rest_framework import generics
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -13,6 +15,7 @@ from ..serializers import RegisterSerializer, UserSerializer
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -43,6 +46,7 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
+    permission_classes = [AllowAny]
 
 
 class MeView(APIView):
