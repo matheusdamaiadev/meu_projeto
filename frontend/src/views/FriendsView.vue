@@ -246,9 +246,9 @@ import { useRouter } from "vue-router";
 
 import { Users, UserPlus, Search, X, Clock, Check } from "lucide-vue-next";
 
-import FriendService from "../services/FriendService";
+import FriendService from "../services/friendService";
 import FriendItem from "../components/friends/FriendItem.vue";
-import { useFriendStore } from "../stores/friend";
+import { useFriendStore } from "../stores/friend"; 
 
 // ========================================================
 // ROUTER

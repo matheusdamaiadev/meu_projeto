@@ -114,14 +114,14 @@
       </div>
     </div>
   </div>
-</template>
+</template> 
 
 <script setup>
 import { ref, onMounted } from "vue";
 
 import { Bell, UserPlus, Folder } from "lucide-vue-next";
 
-import FriendService from "../services/FriendService";
+import FriendService from "../services/friendService";
 import NotificationService from "../services/NotificationService";
 
 // ========================================================

@@ -137,7 +137,7 @@ import {
   inviteProjectMember,
   updateProjectMember,
   removeProjectMember,
-} from "../../services/ProjectService";
+} from "../../services/projectService";
 
 const props = defineProps({
   project: {
